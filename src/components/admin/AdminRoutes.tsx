@@ -13,16 +13,16 @@ import { NewClient } from "./NewClient";
 export function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/calendar" element={<AdminCalendar />} />
-      <Route path="/admin/bookings" element={<AdminBookings />} />
-      <Route path="/admin/bookings/new" element={<NewBooking />} />
-      <Route path="/admin/accommodations" element={<AdminAccommodations />} />
-      <Route path="/admin/clients" element={<AdminClients />} />
-      <Route path="/admin/clients/new" element={<NewClient />} />
-      <Route path="/admin/whatsapp" element={<AdminWhatsApp />} />
-      <Route path="/admin/instagram" element={<AdminInstagram />} />
-      <Route path="/admin/chats" element={<AdminChats />} />
+      <Route index element={<AdminDashboard />} />
+      <Route path="calendar" element={<AdminCalendar />} />
+      <Route path="bookings" element={<AdminBookings />} />
+      <Route path="bookings/new" element={<NewBooking />} />
+      <Route path="accommodations" element={<AdminAccommodations />} />
+      <Route path="clients" element={<AdminClients />} />
+      <Route path="clients/new" element={<NewClient />} />
+      <Route path="whatsapp" element={<AdminWhatsApp />} />
+      <Route path="instagram" element={<AdminInstagram />} />
+      <Route path="chats" element={<AdminChats />} />
     </Routes>
   );
 }

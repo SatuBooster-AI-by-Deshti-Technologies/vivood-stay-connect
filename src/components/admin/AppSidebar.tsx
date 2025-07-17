@@ -140,21 +140,20 @@ export function AppSidebar() {
                       )}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-2">
-                    {integrationItems.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild>
-                          <Button
-                            variant="ghost"
-                            className={`w-full justify-start pl-8 ${getNavCls(isActive(item.url))}`}
-                            onClick={() => navigate(item.url)}
-                          >
-                            <item.icon className="mr-3 h-4 w-4" />
-                            {!collapsed && <span>{item.title}</span>}
-                          </Button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                  <CollapsibleContent>
+                    <div className="space-y-2 mt-2">
+                      {integrationItems.map((item) => (
+                        <Button
+                          key={item.title}
+                          variant="ghost"
+                          className={`w-full justify-start pl-8 ${getNavCls(isActive(item.url))}`}
+                          onClick={() => navigate(item.url)}
+                        >
+                          <item.icon className="mr-3 h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </Button>
+                      ))}
+                    </div>
                   </CollapsibleContent>
                 </Collapsible>
               </SidebarMenuItem>
