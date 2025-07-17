@@ -11,7 +11,8 @@ import {
   ChevronDown,
   ChevronRight,
   Plus,
-  Database
+  Database,
+  Send
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -65,14 +66,9 @@ const integrationItems = [
     icon: Phone 
   },
   { 
-    title: "Instagram", 
-    url: "/admin/instagram", 
-    icon: Instagram 
-  },
-  { 
-    title: "Чаты", 
-    url: "/admin/chats", 
-    icon: MessageSquare 
+    title: "Отправка сообщений", 
+    url: "/admin/prompt", 
+    icon: Send 
   },
 ];
 

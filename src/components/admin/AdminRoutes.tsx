@@ -7,6 +7,7 @@ import { AdminClients } from "./AdminClients";
 import { AdminWhatsApp } from "./AdminWhatsApp";
 import { AdminInstagram } from "./AdminInstagram";
 import { AdminChats } from "./AdminChats";
+import { AdminPrompt } from "./AdminPrompt";
 import { NewBooking } from "./NewBooking";
 import { NewClient } from "./NewClient";
 
@@ -23,6 +24,7 @@ export function AdminRoutes() {
       <Route path="whatsapp" element={<AdminWhatsApp />} />
       <Route path="instagram" element={<AdminInstagram />} />
       <Route path="chats" element={<AdminChats />} />
+      <Route path="prompt" element={<AdminPrompt />} />
     </Routes>
   );
 }
