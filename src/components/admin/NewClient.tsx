@@ -1,11 +1,63 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, ArrowLeft } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Users, ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function NewClient() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    notes: '',
+    source: 'manual'
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .insert([formData]);
+
+      if (error) {
+        console.error('Error creating client:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось создать клиента",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Успешно",
+        description: "Клиент добавлен в базу данных"
+      });
+
+      navigate('/admin/clients');
+    } catch (error) {
+      console.error('Error creating client:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при создании клиента",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -17,40 +69,95 @@ export function NewClient() {
         <h1 className="text-2xl font-bold">Новый клиент</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Информация о клиенте
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Имя</label>
-              <Input placeholder="Иван Иванов" />
+      <form onSubmit={handleSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="w-5 h-5 mr-2" />
+              Информация о клиенте
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <User className="w-5 h-5 mr-2" />
+                Основные данные
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Полное имя *</label>
+                  <Input 
+                    placeholder="Иван Иванов" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email *</label>
+                  <Input 
+                    type="email" 
+                    placeholder="ivan@example.com" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Телефон *</label>
+                  <Input 
+                    placeholder="+7 (777) 123-45-67" 
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Источник</label>
+                  <Select value={formData.source} onValueChange={(value) => setFormData({...formData, source: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите источник" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual">Ручное добавление</SelectItem>
+                      <SelectItem value="website">Сайт</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="phone">Телефонный звонок</SelectItem>
+                      <SelectItem value="referral">Рекомендация</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <Input type="email" placeholder="ivan@example.com" />
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <MapPin className="w-5 h-5 mr-2" />
+                Дополнительная информация
+              </h3>
+              <div>
+                <label className="text-sm font-medium">Заметки</label>
+                <Textarea 
+                  placeholder="Дополнительная информация о клиенте..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  rows={4}
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">Телефон</label>
-              <Input placeholder="+7 (777) 123-45-67" />
+
+            <div className="flex gap-2">
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Добавление...' : 'Добавить клиента'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => navigate('/admin/clients')}>
+                Отмена
+              </Button>
             </div>
-            <div>
-              <label className="text-sm font-medium">Город</label>
-              <Input placeholder="Алматы" />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button>Добавить клиента</Button>
-            <Button variant="outline" onClick={() => navigate('/admin/clients')}>
-              Отмена
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </form>
     </div>
   );
 }
