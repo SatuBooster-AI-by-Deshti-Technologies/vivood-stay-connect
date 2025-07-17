@@ -43,7 +43,10 @@ export default function Auth() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          name: name
+        }
       }
     });
 
@@ -54,21 +57,6 @@ export default function Auth() {
         variant: "destructive"
       });
     } else if (data.user) {
-      // Создаем профиль пользователя
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            user_id: data.user.id,
-            name: name,
-            role: 'user' // По умолчанию обычный пользователь
-          }
-        ]);
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-      }
-
       toast({
         title: "Регистрация успешна",
         description: "Проверьте вашу почту для подтверждения аккаунта"
