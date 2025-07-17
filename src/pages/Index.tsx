@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,22 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 type Language = 'kz' | 'ru' | 'en';
+
+interface AccommodationType {
+  id: string;
+  name_kz: string;
+  name_ru: string;
+  name_en: string;
+  description_kz: string;
+  description_ru: string;
+  description_en: string;
+  price: number;
+  features: string[];
+  is_active: boolean;
+}
 
 const translations = {
   kz: {
@@ -37,6 +51,7 @@ const translations = {
       description: "Нысанды толтырыңыз, біз сізбен байланысамыз",
       name: "Толық аты-жөні",
       phone: "Телефон нөмірі",
+      email: "Email мекенжайы",
       checkIn: "Кіру күні",
       checkOut: "Шығу күні",
       checkInTime: "Кіру уақыты",
@@ -71,8 +86,9 @@ const translations = {
     booking: {
       title: "Бронирование",
       description: "Заполните форму и мы свяжемся с вами для подтверждения",
-      name: "ФИО",
-      phone: "Телефон",
+      name: "Полное имя",
+      phone: "Номер телефона", 
+      email: "Email адрес",
       checkIn: "Дата заезда",
       checkOut: "Дата выезда",
       checkInTime: "Время заезда",
@@ -109,6 +125,7 @@ const translations = {
       description: "Fill out the form and we will contact you for confirmation",
       name: "Full Name",
       phone: "Phone Number",
+      email: "Email Address", 
       checkIn: "Check-in Date",
       checkOut: "Check-out Date",
       checkInTime: "Check-in Time",
@@ -121,57 +138,18 @@ const translations = {
   }
 };
 
-const accommodationTypes = [
-  {
-    id: 'glamping',
-    nameRu: 'Глэмпинг',
-    nameKz: 'Глэмпинг (дөңгелек домик)',
-    nameEn: 'Glamping Dome',
-    description: 'Круглый домик с панорамными окнами',
-    priceWeekday: 50000,
-    priceWeekend: 60000,
-    capacity: '2 взрослых + 2 детей или 4 взрослых',
-    features: ['Завтрак включен', 'Душ и туалет', 'Панорамные окна'],
-    image: '/placeholder.svg',
-    icon: Home
-  },
-  {
-    id: 'square',
-    nameRu: 'Квадратный домик',
-    nameKz: 'Квадрат домик',
-    nameEn: 'Square House',
-    description: 'Уютный домик для двоих',
-    priceWeekday: 35000,
-    priceWeekend: 40000,
-    capacity: '2 человека',
-    features: ['Завтрак включен', 'Душ и туалет', 'Компактный дизайн'],
-    image: '/placeholder.svg',
-    icon: Home
-  },
-  {
-    id: 'vip',
-    nameRu: 'VIP Капсула с кинотеатром',
-    nameKz: 'VIP Капсула КИНОТЕАТОРЫМЕН',
-    nameEn: 'VIP Capsule with Cinema',
-    description: 'Роскошная капсула с панорамным видом и кинотеатром',
-    priceWeekday: 100000,
-    priceWeekend: 120000,
-    capacity: '2 человека',
-    features: ['Завтрак включен', 'Душ и туалет', 'Кинотеатр', 'Панорамный вид', 'Халаты и тапочки'],
-    image: '/placeholder.svg',
-    icon: Crown
-  }
-];
 
 const Index = () => {
   const [language, setLanguage] = useState<Language>('ru');
+  const [accommodationTypes, setAccommodationTypes] = useState<AccommodationType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     checkIn: '',
-    checkInTime: '14:00',
     checkOut: '',
-    checkOutTime: '12:00',
+    guests: 2,
     accommodationType: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -180,31 +158,71 @@ const Index = () => {
 
   const t = translations[language];
 
+  useEffect(() => {
+    loadAccommodationTypes();
+  }, []);
+
+  const loadAccommodationTypes = async () => {
+    const { data, error } = await supabase
+      .from('accommodation_types')
+      .select('*')
+      .eq('is_active', true)
+      .order('price');
+
+    if (error) {
+      console.error('Error loading accommodation types:', error);
+    } else {
+      setAccommodationTypes(data || []);
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Сохраняем бронирование в базу данных
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert([
+        {
+          accommodation_type: formData.accommodationType,
+          check_in: formData.checkIn,
+          check_out: formData.checkOut,
+          guests: formData.guests,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          status: 'pending'
+        }
+      ]);
+
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать бронирование. Попробуйте еще раз.",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: t.booking.thanks,
+        description: t.booking.contact,
+      });
+      
+      // Reset form and close dialog
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        checkIn: '',
+        checkOut: '',
+        guests: 2,
+        accommodationType: ''
+      });
+      setIsOpen(false);
+    }
     
-    // Show success message
-    toast({
-      title: t.booking.thanks,
-      description: t.booking.contact,
-    });
-    
-    // Reset form and close dialog
-    setFormData({
-      name: '',
-      phone: '',
-      checkIn: '',
-      checkInTime: '14:00',
-      checkOut: '',
-      checkOutTime: '12:00',
-      accommodationType: ''
-    });
     setIsLoading(false);
-    setIsOpen(false);
   };
 
   const openBookingDialog = (accommodationType: string) => {
@@ -292,14 +310,14 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {accommodationTypes.map((accommodation) => {
-              const IconComponent = accommodation.icon;
-              return (
+            {loading ? (
+              <div className="col-span-full text-center">Загрузка...</div>
+            ) : accommodationTypes.map((accommodation) => (
                 <Card key={accommodation.id} className="group hover:shadow-elegant transition-all duration-300 border-0 shadow-lg bg-card/80 backdrop-blur-sm hover:-translate-y-2">
                   <div className="relative overflow-hidden rounded-t-lg">
                     <img 
-                      src={accommodation.image} 
-                      alt={accommodation.nameRu}
+                      src="/placeholder.svg" 
+                      alt={accommodation.name_ru}
                       className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 right-4">
@@ -310,17 +328,17 @@ const Index = () => {
                     </div>
                     <div className="absolute top-4 left-4">
                       <div className="bg-card/90 backdrop-blur-sm p-2 rounded-full">
-                        <IconComponent className="w-6 h-6 text-primary" />
+                        <Home className="w-6 h-6 text-primary" />
                       </div>
                     </div>
                   </div>
                   
                   <CardHeader>
                     <CardTitle className="text-2xl text-foreground group-hover:text-primary transition-colors">
-                      {language === 'kz' ? accommodation.nameKz : language === 'en' ? accommodation.nameEn : accommodation.nameRu}
+                      {language === 'kz' ? accommodation.name_kz : language === 'en' ? accommodation.name_en : accommodation.name_ru}
                     </CardTitle>
                     <CardDescription className="text-muted-foreground text-base">
-                      {accommodation.description}
+                      {language === 'kz' ? accommodation.description_kz : language === 'en' ? accommodation.description_en : accommodation.description_ru}
                     </CardDescription>
                   </CardHeader>
                   
@@ -328,13 +346,13 @@ const Index = () => {
                     {/* Capacity */}
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Users className="w-5 h-5 text-secondary" />
-                      <span>{accommodation.capacity}</span>
+                      <span>До 4 человек</span>
                     </div>
                     
                     {/* Features */}
                     <div className="space-y-2">
-                      {accommodation.features.map((feature) => (
-                        <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {accommodation.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
                           <div className="w-2 h-2 bg-secondary rounded-full"></div>
                           <span>{feature}</span>
                         </div>
@@ -344,25 +362,20 @@ const Index = () => {
                     {/* Pricing */}
                     <div className="bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg p-4 space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">{t.rooms.workdays}:</span>
-                        <span className="font-bold text-lg text-foreground">{accommodation.priceWeekday.toLocaleString()} ₸</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">{t.rooms.weekends}:</span>
-                        <span className="font-bold text-lg text-foreground">{accommodation.priceWeekend.toLocaleString()} ₸</span>
+                        <span className="text-sm text-muted-foreground">Цена за ночь:</span>
+                        <span className="font-bold text-lg text-foreground">{accommodation.price.toLocaleString()} ₸</span>
                       </div>
                     </div>
                     
                     <Button 
                       className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 shadow-md hover:shadow-lg transition-all duration-300"
-                      onClick={() => openBookingDialog(accommodation.nameRu)}
+                      onClick={() => openBookingDialog(accommodation.name_ru)}
                     >
-                      {t.rooms.book} {language === 'kz' ? accommodation.nameKz : language === 'en' ? accommodation.nameEn : accommodation.nameRu}
+                      {t.rooms.book} {language === 'kz' ? accommodation.name_kz : language === 'en' ? accommodation.name_en : accommodation.name_ru}
                     </Button>
                   </CardContent>
                 </Card>
-              );
-            })}
+              ))}
           </div>
         </div>
       </section>
@@ -454,6 +467,19 @@ const Index = () => {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="email">{t.booking.email}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder={t.booking.email}
+                required
+                className="h-12"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="phone">{t.booking.phone}</Label>
               <Input
                 id="phone"
@@ -491,29 +517,19 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="checkInTime">{t.booking.checkInTime}</Label>
-                <Input
-                  id="checkInTime"
-                  type="time"
-                  value={formData.checkInTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, checkInTime: e.target.value }))}
-                  required
-                  className="h-12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkOutTime">{t.booking.checkOutTime}</Label>
-                <Input
-                  id="checkOutTime"
-                  type="time"
-                  value={formData.checkOutTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, checkOutTime: e.target.value }))}
-                  required
-                  className="h-12"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="guests">Количество гостей</Label>
+              <Select value={formData.guests.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, guests: parseInt(value) }))}>
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 гость</SelectItem>
+                  <SelectItem value="2">2 гостя</SelectItem>
+                  <SelectItem value="3">3 гостя</SelectItem>
+                  <SelectItem value="4">4 гостя</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <Button 

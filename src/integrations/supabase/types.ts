@@ -14,13 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      accommodation_types: {
+        Row: {
+          created_at: string
+          description_en: string | null
+          description_kz: string | null
+          description_ru: string | null
+          features: string[] | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name_en: string
+          name_kz: string
+          name_ru: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string | null
+          description_kz?: string | null
+          description_ru?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_en: string
+          name_kz: string
+          name_ru: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string | null
+          description_kz?: string | null
+          description_ru?: string | null
+          features?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_en?: string
+          name_kz?: string
+          name_ru?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          accommodation_type: string
+          check_in: string
+          check_out: string
+          created_at: string
+          email: string
+          guests: number
+          id: string
+          name: string
+          phone: string
+          status: string
+          total_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          accommodation_type: string
+          check_in: string
+          check_out: string
+          created_at?: string
+          email: string
+          guests: number
+          id?: string
+          name: string
+          phone: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accommodation_type?: string
+          check_in?: string
+          check_out?: string
+          created_at?: string
+          email?: string
+          guests?: number
+          id?: string
+          name?: string
+          phone?: string
+          status?: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
