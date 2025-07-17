@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/admin/AppSidebar";
+import { AdminRoutes } from "@/components/admin/AdminRoutes";
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Users, Home, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Booking {
   id: string;
