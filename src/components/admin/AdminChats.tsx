@@ -27,6 +27,21 @@ export function AdminChats() {
 
   useEffect(() => {
     loadMessages();
+    
+    // Set up real-time subscription for new messages
+    const channel = supabase
+      .channel('chat_messages')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        () => {
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadMessages = async () => {
@@ -57,18 +72,68 @@ export function AdminChats() {
     if (!newMessage.trim() || !selectedClient) return;
 
     try {
+      // Find client details
+      const clientMessages = groupedMessages[selectedClient];
+      if (!clientMessages || clientMessages.length === 0) return;
+      
+      const client = clientMessages[0].client;
+      const isWhatsApp = clientMessages.some(msg => msg.source === 'whatsapp');
+
+      // Save message to database first
       const { error } = await supabase
         .from('chat_messages')
         .insert([{
           client_id: selectedClient,
-          source: 'admin',
           content: newMessage.trim(),
-          is_from_client: false
+          source: isWhatsApp ? 'whatsapp' : 'admin',
+          is_from_client: false,
+          message_type: 'text'
         }]);
 
       if (error) {
         console.error('Error sending message:', error);
         return;
+      }
+
+      // If it's a WhatsApp client, send through WhatsApp
+      if (isWhatsApp) {
+        try {
+          // Get client phone number
+          const { data: clientData } = await supabase
+            .from('clients')
+            .select('phone')
+            .eq('id', selectedClient)
+            .single();
+
+          if (clientData?.phone) {
+            // Find active WhatsApp session
+            const { data: sessions } = await supabase
+              .from('whatsapp_sessions')
+              .select('id')
+              .eq('status', 'connected')
+              .limit(1);
+
+            if (sessions && sessions.length > 0) {
+              const sessionId = sessions[0].id;
+              
+              // Send through WhatsApp edge function
+              const response = await supabase.functions.invoke('whatsapp-session', {
+                body: {
+                  action: 'send_message',
+                  sessionId: sessionId,
+                  message: newMessage.trim(),
+                  toNumber: clientData.phone
+                }
+              });
+
+              if (response.error) {
+                console.error('WhatsApp send error:', response.error);
+              }
+            }
+          }
+        } catch (whatsappError) {
+          console.error('WhatsApp send failed:', whatsappError);
+        }
       }
 
       setNewMessage('');

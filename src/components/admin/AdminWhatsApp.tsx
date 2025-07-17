@@ -99,6 +99,7 @@ export function AdminWhatsApp() {
 
   const generateQR = async (sessionId: string, sessionName: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.functions.invoke('whatsapp-session', {
         body: {
           action: 'generate_qr',
@@ -119,12 +120,48 @@ export function AdminWhatsApp() {
 
       toast({
         title: "Успешно",
-        description: "QR код обновлен"
+        description: "QR код сгенерирован. Ожидание подключения..."
       });
+
+      // Start polling for status updates
+      let pollCount = 0;
+      const maxPolls = 30; // 60 seconds maximum
+      
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        
+        const { data: sessionData } = await supabase.functions.invoke('whatsapp-session', {
+          body: {
+            action: 'get_status',
+            sessionId
+          }
+        });
+
+        if (sessionData?.status === 'connected') {
+          clearInterval(pollInterval);
+          toast({
+            title: "Подключено!",
+            description: "WhatsApp успешно подключен"
+          });
+          await loadSessions();
+        } else if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          toast({
+            title: "Таймаут",
+            description: "QR код не был отсканирован в течение 60 секунд",
+            variant: "destructive"
+          });
+        } else {
+          // Update sessions to show current QR
+          await loadSessions();
+        }
+      }, 2000);
 
       await loadSessions();
     } catch (error) {
       console.error('Error generating QR:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
