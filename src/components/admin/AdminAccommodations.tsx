@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Home, DollarSign, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, DollarSign, Tag, Images } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ImageUploader } from './ImageUploader';
 
 interface AccommodationType {
   id: string;
@@ -23,6 +24,7 @@ interface AccommodationType {
   features: string[];
   is_active: boolean;
   image_url: string;
+  images: string[];
   created_at: string;
 }
 
@@ -43,7 +45,8 @@ export function AdminAccommodations() {
     price: 0,
     features: [] as string[],
     is_active: true,
-    image_url: ''
+    image_url: '',
+    images: [] as string[]
   });
 
   useEffect(() => {
@@ -143,7 +146,8 @@ export function AdminAccommodations() {
       price: accommodation.price,
       features: accommodation.features || [],
       is_active: accommodation.is_active,
-      image_url: accommodation.image_url || ''
+      image_url: accommodation.image_url || '',
+      images: accommodation.images || []
     });
     setIsDialogOpen(true);
   };
@@ -191,7 +195,8 @@ export function AdminAccommodations() {
       price: 0,
       features: [],
       is_active: true,
-      image_url: ''
+      image_url: '',
+      images: []
     });
   };
 
@@ -290,15 +295,47 @@ export function AdminAccommodations() {
           </Card>
         ) : (
           accommodations.map((accommodation) => (
-            <Card key={accommodation.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{accommodation.name_ru}</CardTitle>
-                  <Badge variant={accommodation.is_active ? 'default' : 'secondary'}>
-                    {accommodation.is_active ? 'Активно' : 'Неактивно'}
-                  </Badge>
-                </div>
+            <Card key={accommodation.id} className="overflow-hidden">
+              <div className="relative">
+                {accommodation.images && accommodation.images.length > 0 ? (
+                  <div className="h-48 bg-gray-100 overflow-hidden">
+                    <img 
+                      src={accommodation.images[0]} 
+                      alt={accommodation.name_ru}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden h-48 bg-gray-100 flex items-center justify-center">
+                      <Home className="h-12 w-12 text-gray-400" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-48 bg-gray-100 flex items-center justify-center">
+                    <Home className="h-12 w-12 text-gray-400" />
+                  </div>
+                )}
+                {accommodation.images && accommodation.images.length > 1 && (
+                  <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm flex items-center">
+                    <Images className="h-3 w-3 mr-1" />
+                    {accommodation.images.length}
+                  </div>
+                )}
+                <Badge 
+                  variant={accommodation.is_active ? 'default' : 'secondary'}
+                  className="absolute top-2 left-2"
+                >
+                  {accommodation.is_active ? 'Активно' : 'Неактивно'}
+                </Badge>
+              </div>
+              
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">{accommodation.name_ru}</CardTitle>
               </CardHeader>
+              
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-sm text-gray-600 line-clamp-2">
@@ -429,7 +466,16 @@ export function AdminAccommodations() {
             </div>
 
             <div>
-              <Label htmlFor="image_url">URL изображения</Label>
+              <Label htmlFor="images">Изображения домиков</Label>
+              <ImageUploader 
+                images={formData.images}
+                onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+                maxImages={5}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image_url">URL основного изображения (устаревшее)</Label>
               <Input
                 id="image_url"
                 value={formData.image_url}
