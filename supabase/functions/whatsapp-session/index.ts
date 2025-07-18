@@ -25,22 +25,21 @@ class WhatsAppSession {
     console.log(`Generating QR for session: ${this.sessionName}`);
     
     try {
-      // Generate WhatsApp-like QR data structure
+      // Generate WhatsApp Web QR code format
       const timestamp = Date.now();
-      const clientId = Math.random().toString(36).substring(2, 15);
-      const publicKey = Math.random().toString(36).substring(2, 15);
-      const secret = Math.random().toString(36).substring(2, 15);
+      const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+      const ref = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
       
-      // WhatsApp QR format simulation
-      const qrData = JSON.stringify({
-        ref: clientId,
-        publicKey: publicKey,
-        secret: secret,
-        serverToken: "1@whatsapp",
-        clientToken: timestamp.toString(),
-        wid: `${clientId}@c.us`,
-        browserToken: [timestamp, 2, "Chrome"]
-      });
+      // WhatsApp Web uses this specific format: ref,publicKey,clientToken,serverToken
+      const publicKey = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => 
+        byte.toString(16).padStart(2, '0')).join('');
+      const clientToken = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => 
+        byte.toString(16).padStart(2, '0')).join('');
+      
+      // WhatsApp QR format: ref,publicKey,clientToken,serverToken
+      const qrData = `${ref},${publicKey},${clientToken},1@1234567890ABCDEF`;
+      
+      console.log('QR Data format:', qrData.substring(0, 50) + '...');
       
       // Generate real QR code
       const qrCodeBase64 = await qrcode(qrData, { 
