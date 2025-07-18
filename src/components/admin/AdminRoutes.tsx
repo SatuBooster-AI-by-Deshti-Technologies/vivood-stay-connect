@@ -4,10 +4,6 @@ import { AdminCalendar } from "./AdminCalendar";
 import { AdminBookings } from "./AdminBookings";
 import { AdminAccommodations } from "./AdminAccommodations";
 import { AdminClients } from "./AdminClients";
-import { AdminWhatsApp } from "./AdminWhatsApp";
-import { AdminInstagram } from "./AdminInstagram";
-import { AdminChats } from "./AdminChats";
-import { AdminPrompt } from "./AdminPrompt";
 import { NewBooking } from "./NewBooking";
 import { NewClient } from "./NewClient";
 
@@ -21,10 +17,6 @@ export function AdminRoutes() {
       <Route path="accommodations" element={<AdminAccommodations />} />
       <Route path="clients" element={<AdminClients />} />
       <Route path="clients/new" element={<NewClient />} />
-      <Route path="whatsapp" element={<AdminWhatsApp />} />
-      <Route path="instagram" element={<AdminInstagram />} />
-      <Route path="chats" element={<AdminChats />} />
-      <Route path="prompt" element={<AdminPrompt />} />
     </Routes>
   );
 }

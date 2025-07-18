@@ -107,47 +107,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_messages: {
-        Row: {
-          client_id: string | null
-          content: string
-          created_at: string
-          id: string
-          is_from_client: boolean
-          message_type: string
-          metadata: Json | null
-          source: string
-        }
-        Insert: {
-          client_id?: string | null
-          content: string
-          created_at?: string
-          id?: string
-          is_from_client?: boolean
-          message_type?: string
-          metadata?: Json | null
-          source: string
-        }
-        Update: {
-          client_id?: string | null
-          content?: string
-          created_at?: string
-          id?: string
-          is_from_client?: boolean
-          message_type?: string
-          metadata?: Json | null
-          source?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           created_at: string
@@ -181,39 +140,6 @@ export type Database = {
         }
         Relationships: []
       }
-      instagram_config: {
-        Row: {
-          access_token: string | null
-          business_account_id: string | null
-          created_at: string
-          id: string
-          is_active: boolean
-          last_sync: string | null
-          updated_at: string
-          webhook_verify_token: string | null
-        }
-        Insert: {
-          access_token?: string | null
-          business_account_id?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          last_sync?: string | null
-          updated_at?: string
-          webhook_verify_token?: string | null
-        }
-        Update: {
-          access_token?: string | null
-          business_account_id?: string | null
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          last_sync?: string | null
-          updated_at?: string
-          webhook_verify_token?: string | null
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -238,39 +164,6 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      whatsapp_sessions: {
-        Row: {
-          created_at: string
-          id: string
-          last_activity: string | null
-          phone_number: string | null
-          qr_code: string | null
-          session_name: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          last_activity?: string | null
-          phone_number?: string | null
-          qr_code?: string | null
-          session_name: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          last_activity?: string | null
-          phone_number?: string | null
-          qr_code?: string | null
-          session_name?: string
-          status?: string
-          updated_at?: string
         }
         Relationships: []
       }

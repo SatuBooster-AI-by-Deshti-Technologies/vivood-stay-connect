@@ -1,18 +1,10 @@
-import { useState } from "react";
 import { 
   Calendar, 
   Users, 
   Home, 
-  Settings, 
   BarChart3, 
-  MessageSquare, 
-  Phone,
-  Instagram,
-  ChevronDown,
-  ChevronRight,
   Plus,
-  Database,
-  Send
+  Database
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -28,7 +20,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   { 
@@ -59,24 +50,11 @@ const menuItems = [
   },
 ];
 
-const integrationItems = [
-  { 
-    title: "WhatsApp", 
-    url: "/admin/whatsapp", 
-    icon: Phone 
-  },
-  { 
-    title: "Отправка сообщений", 
-    url: "/admin/prompt", 
-    icon: Send 
-  },
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
   const collapsed = state === "collapsed";
 
   const isActive = (path: string, exact = false) => {
@@ -116,46 +94,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Интеграции</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <Collapsible 
-                  open={isIntegrationsOpen} 
-                  onOpenChange={setIsIntegrationsOpen}
-                >
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="w-full justify-between">
-                      <div className="flex items-center">
-                        <MessageSquare className="mr-3 h-4 w-4" />
-                        {!collapsed && <span>Мессенджеры</span>}
-                      </div>
-                      {!collapsed && (
-                        isIntegrationsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                      )}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="space-y-2 mt-2">
-                      {integrationItems.map((item) => (
-                        <Button
-                          key={item.title}
-                          variant="ghost"
-                          className={`w-full justify-start pl-8 ${getNavCls(isActive(item.url))}`}
-                          onClick={() => navigate(item.url)}
-                        >
-                          <item.icon className="mr-3 h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </Button>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Быстрые действия</SidebarGroupLabel>
