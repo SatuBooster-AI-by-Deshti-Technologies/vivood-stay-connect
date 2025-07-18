@@ -69,7 +69,15 @@ export function AppSidebar() {
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarTrigger className="m-4" />
+      <div className="p-4">
+        {!collapsed && (
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-primary">Vivood Tau</h2>
+            <p className="text-sm text-muted-foreground">Эко-отель в горах</p>
+          </div>
+        )}
+        <SidebarTrigger />
+      </div>
       
       <SidebarContent>
         <SidebarGroup>
