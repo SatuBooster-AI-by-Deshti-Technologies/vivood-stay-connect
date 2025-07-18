@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { qrcode } from "https://deno.land/x/qrcode@v2.0.0/mod.ts";
+import { makeWASocket, DisconnectReason, useMultiFileAuthState } from "https://esm.sh/@whiskeysockets/baileys@6.6.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +11,7 @@ const corsHeaders = {
 // Store active WhatsApp sessions
 const activeSessions = new Map();
 
-// Real WhatsApp Baileys-like implementation
+// Real WhatsApp Baileys implementation
 class BaileysWhatsAppSession {
   constructor(sessionId, sessionName, supabase) {
     this.sessionId = sessionId;
@@ -25,36 +26,94 @@ class BaileysWhatsAppSession {
   async generateQR() {
     console.log(`Generating QR for session: ${this.sessionName}`);
     
-    // Baileys-style QR generation
-    const timestamp = Date.now();
-    const ref = Math.random().toString(36).substring(2, 15);
-    const publicKey = Math.random().toString(36).substring(2, 15);
-    const secret = Math.random().toString(36).substring(2, 15);
-    
-    // Create Baileys-like QR data - this would normally be JSON with WhatsApp specific data
-    const qrData = `1@${ref}@${secret}@${publicKey}@${timestamp}@whatsapp`;
-    
     try {
-      // Generate real QR code using qrcode library
-      const qrCodeBase64 = await qrcode(qrData, { 
-        size: 256,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
+      // Use temporary directory for session storage
+      const sessionDir = `/tmp/${this.sessionName}`;
+      
+      // Create auth state
+      const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+      
+      // Create WhatsApp socket
+      this.socket = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        logger: {
+          level: 'silent',
+          child: () => ({
+            level: 'silent',
+            debug: () => {},
+            info: () => {},
+            warn: () => {},
+            error: () => {},
+            fatal: () => {},
+            trace: () => {}
+          }),
+          debug: () => {},
+          info: () => {},
+          warn: () => {},
+          error: () => {},
+          fatal: () => {},
+          trace: () => {}
         }
       });
-      
-      this.qrCode = qrCodeBase64;
-      
-      await this.supabase
-        .from('whatsapp_sessions')
-        .update({
-          qr_code: this.qrCode,
-          status: 'waiting'
-        })
-        .eq('id', this.sessionId);
 
-      // Baileys-style connection timeout (2 minutes)
+      // Handle QR code generation
+      this.socket.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        
+        if (qr) {
+          console.log('QR code generated');
+          
+          // Convert QR to base64 image
+          const qrCodeBase64 = await qrcode(qr, { 
+            size: 256,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          
+          this.qrCode = qrCodeBase64;
+          
+          await this.supabase
+            .from('whatsapp_sessions')
+            .update({
+              qr_code: this.qrCode,
+              status: 'waiting'
+            })
+            .eq('id', this.sessionId);
+        }
+        
+        if (connection === 'close') {
+          const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+          
+          if (shouldReconnect) {
+            console.log('Connection closed, reconnecting...');
+            setTimeout(() => this.generateQR(), 3000);
+          } else {
+            console.log('Connection logged out');
+            await this.handleDisconnection();
+          }
+        } else if (connection === 'open') {
+          console.log('WhatsApp connected successfully');
+          await this.handleConnection();
+        }
+      });
+
+      // Handle credential updates
+      this.socket.ev.on('creds.update', saveCreds);
+      
+      // Handle incoming messages
+      this.socket.ev.on('messages.upsert', async (m) => {
+        const messages = m.messages;
+        for (const message of messages) {
+          if (!message.key.fromMe && message.message) {
+            await this.handleIncomingMessage(message);
+          }
+        }
+      });
+
+      // Set timeout for QR expiration
       this.connectionTimeout = setTimeout(() => {
         this.handleConnectionTimeout();
       }, 120000);
@@ -66,6 +125,118 @@ class BaileysWhatsAppSession {
     }
   }
 
+
+  async handleConnection() {
+    console.log(`WhatsApp connected for session: ${this.sessionName}`);
+    
+    // Clear timeout
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+    }
+    
+    this.isConnected = true;
+    
+    // Get phone number from socket info
+    const phoneNumber = this.socket?.user?.id || `+7${Math.floor(Math.random() * 9000000000) + 1000000000}`;
+    
+    await this.supabase
+      .from('whatsapp_sessions')
+      .update({
+        status: 'connected',
+        phone_number: phoneNumber,
+        qr_code: null,
+        last_activity: new Date().toISOString()
+      })
+      .eq('id', this.sessionId);
+
+    console.log(`WhatsApp connected successfully with phone: ${phoneNumber}`);
+  }
+
+  async handleDisconnection() {
+    console.log(`WhatsApp disconnected for session: ${this.sessionName}`);
+    this.isConnected = false;
+    
+    await this.supabase
+      .from('whatsapp_sessions')
+      .update({
+        status: 'disconnected',
+        qr_code: null
+      })
+      .eq('id', this.sessionId);
+  }
+
+  async handleIncomingMessage(message) {
+    try {
+      // Extract message content
+      let content = '';
+      if (message.message?.conversation) {
+        content = message.message.conversation;
+      } else if (message.message?.extendedTextMessage?.text) {
+        content = message.message.extendedTextMessage.text;
+      } else {
+        return; // Skip unsupported message types
+      }
+
+      // Extract sender phone number
+      const fromNumber = message.key.remoteJid.replace('@s.whatsapp.net', '');
+      
+      console.log(`Received message from ${fromNumber}: ${content}`);
+      
+      // Find or create client
+      let clientId = null;
+      const { data: existingClient } = await this.supabase
+        .from('clients')
+        .select('id')
+        .eq('phone', `+${fromNumber}`)
+        .single();
+
+      if (existingClient) {
+        clientId = existingClient.id;
+      } else {
+        const { data: newClient } = await this.supabase
+          .from('clients')
+          .insert({
+            name: `WhatsApp User ${fromNumber.slice(-4)}`,
+            email: `user${fromNumber.slice(-4)}@whatsapp.com`,
+            phone: `+${fromNumber}`,
+            source: 'whatsapp'
+          })
+          .select('id')
+          .single();
+        
+        if (newClient) {
+          clientId = newClient.id;
+        }
+      }
+
+      if (clientId) {
+        // Save incoming message
+        await this.supabase
+          .from('chat_messages')
+          .insert({
+            client_id: clientId,
+            content: content,
+            source: 'whatsapp',
+            is_from_client: true,
+            message_type: 'text'
+          });
+
+        // Generate and send AI response
+        await this.generateAIResponse(content, clientId, `+${fromNumber}`, message.key.remoteJid);
+      }
+
+      // Update session activity
+      await this.supabase
+        .from('whatsapp_sessions')
+        .update({
+          last_activity: new Date().toISOString()
+        })
+        .eq('id', this.sessionId);
+        
+    } catch (error) {
+      console.error('Error handling incoming message:', error);
+    }
+  }
 
   async handleConnectionTimeout() {
     console.log(`Connection timeout for session: ${this.sessionName}`);
@@ -79,122 +250,8 @@ class BaileysWhatsAppSession {
       .eq('id', this.sessionId);
   }
 
-  async connectToWhatsApp() {
-    console.log(`Attempting to connect to WhatsApp for session: ${this.sessionName}`);
-    
-    // Clear timeout
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-    }
-    
-    this.isConnected = true;
-    
-    // Generate a realistic phone number
-    const phoneNumber = `+7${Math.floor(Math.random() * 9000000000) + 1000000000}`;
-    
-    await this.supabase
-      .from('whatsapp_sessions')
-      .update({
-        status: 'connected',
-        phone_number: phoneNumber,
-        qr_code: null,
-        last_activity: new Date().toISOString()
-      })
-      .eq('id', this.sessionId);
 
-    console.log(`WhatsApp connected for session: ${this.sessionName} with phone: ${phoneNumber}`);
-    
-    // Start listening for messages
-    this.startMessageListener();
-  }
-
-  async startMessageListener() {
-    console.log(`Starting message listener for session: ${this.sessionName}`);
-    
-    // Simulate receiving a welcome message after connection
-    setTimeout(async () => {
-      if (this.isConnected) {
-        await this.receiveMessage('WhatsApp Web подключен! Готов к работе.');
-      }
-    }, 5000);
-    
-    // Simulate periodic test messages (for demo purposes)
-    const messageInterval = setInterval(async () => {
-      if (!this.isConnected) {
-        clearInterval(messageInterval);
-        return;
-      }
-
-      // Random chance to receive a message
-      if (Math.random() < 0.1) { // 10% chance every 30 seconds
-        const testMessages = [
-          'Здравствуйте! Интересует бронирование номера.',
-          'Доступны ли номера на выходные?',
-          'Какие у вас цены на размещение?',
-          'Можно ли забронировать номер люкс?',
-          'Есть ли свободные места на завтра?'
-        ];
-        
-        const randomMessage = testMessages[Math.floor(Math.random() * testMessages.length)];
-        await this.receiveMessage(randomMessage);
-      }
-    }, 30000);
-  }
-
-  async receiveMessage(content, fromNumber = null) {
-    console.log(`Received message: ${content}`);
-    
-    // Find or create client
-    let clientId = null;
-    const phone = fromNumber || `+7${Math.floor(Math.random() * 9000000000) + 1000000000}`;
-    
-    const { data: existingClient } = await this.supabase
-      .from('clients')
-      .select('id')
-      .eq('phone', phone)
-      .single();
-
-    if (existingClient) {
-      clientId = existingClient.id;
-    } else {
-      const { data: newClient } = await this.supabase
-        .from('clients')
-        .insert({
-          name: `WhatsApp User ${phone.slice(-4)}`,
-          email: `user${phone.slice(-4)}@whatsapp.com`,
-          phone: phone,
-          source: 'whatsapp'
-        })
-        .select('id')
-        .single();
-      
-      clientId = newClient.id;
-    }
-
-    // Save incoming message
-    await this.supabase
-      .from('chat_messages')
-      .insert({
-        client_id: clientId,
-        content: content,
-        source: 'whatsapp',
-        is_from_client: true,
-        message_type: 'text'
-      });
-
-    // Generate AI response
-    await this.generateAIResponse(content, clientId, phone);
-
-    // Update session activity
-    await this.supabase
-      .from('whatsapp_sessions')
-      .update({
-        last_activity: new Date().toISOString()
-      })
-      .eq('id', this.sessionId);
-  }
-
-  async generateAIResponse(userMessage, clientId, phone) {
+  async generateAIResponse(userMessage, clientId, phone, whatsappJid) {
     try {
       // Get AI configuration (OpenAI key should be stored in Supabase secrets)
       const openAIKey = Deno.env.get('OPENAI_API_KEY');
@@ -213,7 +270,7 @@ class BaileysWhatsAppSession {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'gpt-4.1-2025-04-14',
           messages: [
             { role: 'system', content: defaultPrompt },
             { role: 'user', content: userMessage }
@@ -231,8 +288,11 @@ class BaileysWhatsAppSession {
       const data = await response.json();
       const aiResponse = data.choices[0]?.message?.content;
 
-      if (aiResponse) {
-        // Save AI response
+      if (aiResponse && this.socket) {
+        // Send message back via WhatsApp
+        await this.socket.sendMessage(whatsappJid, { text: aiResponse });
+        
+        // Save AI response to database
         await this.supabase
           .from('chat_messages')
           .insert({
@@ -345,24 +405,14 @@ serve(async (req) => {
 
         const qrCode = await session.generateQR();
         
-        // Baileys-style auto-connect simulation (10 seconds)
-        setTimeout(async () => {
-          const activeSession = activeSessions.get(sessionId);
-          if (activeSession && !activeSession.isConnected) {
-            await activeSession.connectToWhatsApp();
-          }
-        }, 10000);
+        // Auto-scan simulation is handled by Baileys events
         
         return new Response(JSON.stringify({ success: true, qrCode }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
       case 'connect':
-        const sessionToConnect = activeSessions.get(sessionId);
-        if (sessionToConnect) {
-          await sessionToConnect.connectToWhatsApp();
-        }
-        
+        // This action is no longer needed as Baileys handles connection automatically
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
