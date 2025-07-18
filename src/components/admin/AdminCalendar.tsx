@@ -104,11 +104,11 @@ export function AdminCalendar() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'confirmed': return 'bg-green-500/20 text-green-700 border-green-500/30';
+      case 'pending': return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
+      case 'cancelled': return 'bg-red-500/20 text-red-700 border-red-500/30';
+      case 'completed': return 'bg-blue-500/20 text-blue-700 border-blue-500/30';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -259,14 +259,19 @@ export function AdminCalendar() {
                         {day.getDate()}
                       </div>
                       <div className="space-y-1">
-                        {dayBookings.slice(0, 2).map((booking, i) => (
-                          <div
-                            key={i}
-                            className="text-xs p-1 rounded bg-primary/10 text-primary truncate"
-                          >
-                            {booking.name}
-                          </div>
-                        ))}
+                        {dayBookings.slice(0, 2).map((booking, i) => {
+                          const statusColor = booking.status === 'confirmed' ? 'bg-green-500/20 text-green-700 border-green-500/30' :
+                                            booking.status === 'cancelled' ? 'bg-red-500/20 text-red-700 border-red-500/30' :
+                                            'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
+                          return (
+                            <div
+                              key={i}
+                              className={`text-xs p-1 rounded border truncate ${statusColor}`}
+                            >
+                              {booking.name}
+                            </div>
+                          );
+                        })}
                         {dayBookings.length > 2 && (
                           <div className="text-xs text-muted-foreground">
                             +{dayBookings.length - 2} еще
