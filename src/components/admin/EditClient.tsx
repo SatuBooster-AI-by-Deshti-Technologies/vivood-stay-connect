@@ -38,7 +38,7 @@ export function EditClient() {
         .from('clients')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading client:', error);
