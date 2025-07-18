@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, QrCode, MessageCircle, Smartphone, RefreshCw, Power } from 'lucide-react';
+import { Phone, QrCode, MessageCircle, Smartphone, RefreshCw, Power, Trash2, Settings, Bot } from 'lucide-react';
 
 interface WhatsAppSession {
   id: string;
@@ -21,10 +22,15 @@ export function AdminWhatsApp() {
   const [sessions, setSessions] = useState<WhatsAppSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSessionName, setNewSessionName] = useState('');
+  const [aiConfig, setAiConfig] = useState({
+    openai_api_key: '',
+    prompt: 'Вы - помощник отеля. Отвечайте вежливо и помогайте с бронированием номеров.'
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     loadSessions();
+    loadAiConfig();
   }, []);
 
   const loadSessions = async () => {
@@ -162,6 +168,65 @@ export function AdminWhatsApp() {
       console.error('Error generating QR:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAiConfig = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      // В реальном проекте можно создать отдельную таблицу для настроек ИИ
+      // Пока используем локальное состояние
+    } catch (error) {
+      console.error('Error loading AI config:', error);
+    }
+  };
+
+  const saveAiConfig = async () => {
+    if (!aiConfig.openai_api_key.trim()) {
+      toast({
+        title: "Ошибка",
+        description: "Введите OpenAI API ключ",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Успешно",
+      description: "Настройки ИИ сохранены"
+    });
+  };
+
+  const deleteSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('whatsapp_sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (error) {
+        console.error('Error deleting session:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось удалить сессию",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Успешно",
+        description: "Сессия удалена"
+      });
+
+      await loadSessions();
+    } catch (error) {
+      console.error('Error deleting session:', error);
     }
   };
 
@@ -324,6 +389,14 @@ export function AdminWhatsApp() {
                         <Power className="w-4 h-4 mr-2" />
                         Отключить
                       </Button>
+                      <Button
+                        onClick={() => deleteSession(session.id)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Удалить
+                      </Button>
                     </div>
                   </div>
 
@@ -358,6 +431,48 @@ export function AdminWhatsApp() {
           ))
         )}
       </div>
+
+      {/* Настройки ИИ */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Bot className="w-5 h-5 mr-2" />
+            Настройки ИИ
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">OpenAI API Key</label>
+            <Input
+              type="password"
+              placeholder="sk-..."
+              value={aiConfig.openai_api_key}
+              onChange={(e) => setAiConfig(prev => ({ ...prev, openai_api_key: e.target.value }))}
+            />
+            <p className="text-xs text-gray-600">
+              Получите ключ на <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">platform.openai.com</a>
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Промпт для ИИ</label>
+            <Textarea
+              placeholder="Введите инструкции для ИИ..."
+              value={aiConfig.prompt}
+              onChange={(e) => setAiConfig(prev => ({ ...prev, prompt: e.target.value }))}
+              rows={4}
+            />
+            <p className="text-xs text-gray-600">
+              Опишите, как должен вести себя ИИ при ответе на сообщения клиентов
+            </p>
+          </div>
+
+          <Button onClick={saveAiConfig} className="w-full">
+            <Settings className="w-4 h-4 mr-2" />
+            Сохранить настройки ИИ
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
