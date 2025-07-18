@@ -205,7 +205,7 @@ class BaileysWhatsAppSession {
       clientId = newClient.id;
     }
 
-    // Save message
+    // Save incoming message
     await this.supabase
       .from('chat_messages')
       .insert({
@@ -216,6 +216,9 @@ class BaileysWhatsAppSession {
         message_type: 'text'
       });
 
+    // Generate AI response
+    await this.generateAIResponse(content, clientId, phone);
+
     // Update session activity
     await this.supabase
       .from('whatsapp_sessions')
@@ -223,6 +226,62 @@ class BaileysWhatsAppSession {
         last_activity: new Date().toISOString()
       })
       .eq('id', this.sessionId);
+  }
+
+  async generateAIResponse(userMessage, clientId, phone) {
+    try {
+      // Get AI configuration (OpenAI key should be stored in Supabase secrets)
+      const openAIKey = Deno.env.get('OPENAI_API_KEY');
+      if (!openAIKey) {
+        console.log('OpenAI API key not configured');
+        return;
+      }
+
+      const defaultPrompt = 'Вы - ассистент отеля. Отвечайте вежливо и помогайте с бронированием номеров. Отвечайте кратко и по делу.';
+      
+      // Call OpenAI API
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: defaultPrompt },
+            { role: 'user', content: userMessage }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        console.error('OpenAI API error:', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      const aiResponse = data.choices[0]?.message?.content;
+
+      if (aiResponse) {
+        // Save AI response
+        await this.supabase
+          .from('chat_messages')
+          .insert({
+            client_id: clientId,
+            content: aiResponse,
+            source: 'whatsapp',
+            is_from_client: false,
+            message_type: 'text'
+          });
+
+        console.log(`AI responded to ${phone}: ${aiResponse}`);
+      }
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+    }
   }
 
   async sendMessage(content, toNumber) {
@@ -292,7 +351,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { action, sessionName, sessionId, message, toNumber } = await req.json();
+    const { action, sessionName, sessionId, message, toNumber, aiConfig } = await req.json();
 
     switch (action) {
       case 'create':
@@ -383,6 +442,13 @@ serve(async (req) => {
           .single();
 
         return new Response(JSON.stringify(sessionData), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      case 'save_ai_config':
+        // In a real implementation, save to a dedicated AI config table
+        // For now, just return success
+        return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
