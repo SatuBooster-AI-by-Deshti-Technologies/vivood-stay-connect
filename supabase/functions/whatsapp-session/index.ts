@@ -25,23 +25,19 @@ class WhatsAppSession {
     console.log(`Generating QR for session: ${this.sessionName}`);
     
     try {
-      // Generate WhatsApp Web QR code format
-      const timestamp = Date.now();
-      const randomBytes = crypto.getRandomValues(new Uint8Array(32));
-      const ref = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      // ДЕМО: Генерируем QR код с информацией о том, что это демо-версия
+      const demoInfo = {
+        demo: true,
+        sessionId: this.sessionId,
+        sessionName: this.sessionName,
+        message: "Это демо-версия WhatsApp интеграции. Для настоящей интеграции нужен WhatsApp Business API.",
+        instructions: "Нажмите 'Подключить вручную' для демонстрации функций чата"
+      };
       
-      // WhatsApp Web uses this specific format: ref,publicKey,clientToken,serverToken
-      const publicKey = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => 
-        byte.toString(16).padStart(2, '0')).join('');
-      const clientToken = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => 
-        byte.toString(16).padStart(2, '0')).join('');
+      const qrData = JSON.stringify(demoInfo);
+      console.log('Demo QR generated for session:', this.sessionName);
       
-      // WhatsApp QR format: ref,publicKey,clientToken,serverToken
-      const qrData = `${ref},${publicKey},${clientToken},1@1234567890ABCDEF`;
-      
-      console.log('QR Data format:', qrData.substring(0, 50) + '...');
-      
-      // Generate real QR code
+      // Generate QR code with demo info
       const qrCodeBase64 = await qrcode(qrData, { 
         size: 256,
         color: {
@@ -60,10 +56,8 @@ class WhatsAppSession {
         })
         .eq('id', this.sessionId);
 
-      // Auto-connect after 15 seconds (simulation)
-      this.connectionTimeout = setTimeout(async () => {
-        await this.handleConnection();
-      }, 15000);
+      // Убираем автоподключение - только по запросу пользователя
+      console.log('QR code ready. Waiting for manual connection...');
       
       return this.qrCode;
     } catch (error) {
@@ -311,6 +305,20 @@ serve(async (req) => {
         const qrCode = await session.generateQR();
         
         return new Response(JSON.stringify({ success: true, qrCode }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      case 'connect_demo':
+        const demoSession = activeSessions.get(sessionId);
+        if (demoSession) {
+          await demoSession.handleConnection();
+        } else {
+          const newDemoSession = new WhatsAppSession(sessionId, sessionName || 'Demo', supabase);
+          activeSessions.set(sessionId, newDemoSession);
+          await newDemoSession.handleConnection();
+        }
+        
+        return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 

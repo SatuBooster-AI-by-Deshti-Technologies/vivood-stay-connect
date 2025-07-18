@@ -230,6 +230,37 @@ export function AdminWhatsApp() {
     }
   };
 
+  const connectDemo = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('whatsapp-session', {
+        body: {
+          action: 'connect_demo',
+          sessionId,
+          sessionName: sessions.find(s => s.id === sessionId)?.session_name
+        }
+      });
+
+      if (error) {
+        console.error('Error connecting demo:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось подключить демо",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Успешно",
+        description: "Демо-версия WhatsApp подключена"
+      });
+
+      await loadSessions();
+    } catch (error) {
+      console.error('Error connecting demo:', error);
+    }
+  };
+
   const disconnectSession = async (sessionId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('whatsapp-session', {
@@ -394,34 +425,43 @@ export function AdminWhatsApp() {
                     </div>
                   )}
                   
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => generateQR(session.id, session.session_name)}
-                      variant="outline"
-                      size="sm"
-                      disabled={session.status === 'connected'}
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Обновить QR
-                    </Button>
-                    <Button
-                      onClick={() => disconnectSession(session.id)}
-                      variant="destructive"
-                      size="sm"
-                      disabled={session.status === 'disconnected'}
-                    >
-                      <Power className="w-4 h-4 mr-2" />
-                      Отключить
-                    </Button>
-                    <Button
-                      onClick={() => deleteSession(session.id)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Удалить
-                    </Button>
-                  </div>
+                   <div className="flex flex-wrap gap-2">
+                     <Button
+                       onClick={() => generateQR(session.id, session.session_name)}
+                       variant="outline"
+                       size="sm"
+                       disabled={session.status === 'connected'}
+                     >
+                       <RefreshCw className="w-4 h-4 mr-2" />
+                       Генерировать QR
+                     </Button>
+                     <Button
+                       onClick={() => connectDemo(session.id)}
+                       variant="default"
+                       size="sm"
+                       disabled={session.status === 'connected'}
+                     >
+                       <Phone className="w-4 h-4 mr-2" />
+                       Подключить демо
+                     </Button>
+                     <Button
+                       onClick={() => disconnectSession(session.id)}
+                       variant="destructive"
+                       size="sm"
+                       disabled={session.status === 'disconnected'}
+                     >
+                       <Power className="w-4 h-4 mr-2" />
+                       Отключить
+                     </Button>
+                     <Button
+                       onClick={() => deleteSession(session.id)}
+                       variant="outline"
+                       size="sm"
+                     >
+                       <Trash2 className="w-4 h-4 mr-2" />
+                       Удалить
+                     </Button>
+                   </div>
                 </div>
 
                 <div className="space-y-3">
@@ -433,9 +473,12 @@ export function AdminWhatsApp() {
                         alt="WhatsApp QR Code"
                         className="w-full max-w-32 mx-auto"
                       />
-                      <p className="text-xs text-center text-gray-600 mt-2">
-                        Сканируйте в WhatsApp
-                      </p>
+                       <p className="text-xs text-center text-gray-600 mt-2">
+                         ДЕМО QR-код - не сканируется в WhatsApp
+                       </p>
+                       <p className="text-xs text-center text-blue-600 mt-1">
+                         Используйте "Подключить демо" для тестирования
+                       </p>
                     </div>
                   ) : (
                     <div className="bg-gray-100 p-6 rounded-lg flex flex-col items-center justify-center">
