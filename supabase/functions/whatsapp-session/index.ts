@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { qrcode } from "https://deno.land/x/qrcode@v2.0.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,76 +31,41 @@ class BaileysWhatsAppSession {
     const publicKey = Math.random().toString(36).substring(2, 15);
     const secret = Math.random().toString(36).substring(2, 15);
     
-    // Create Baileys-like QR data
-    const qrData = `${ref},${secret},${publicKey},${timestamp}`;
+    // Create Baileys-like QR data - this would normally be JSON with WhatsApp specific data
+    const qrData = `1@${ref}@${secret}@${publicKey}@${timestamp}@whatsapp`;
     
-    // Generate actual QR code pattern using a simple QR-like SVG
-    const qrSvg = this.generateQRCodeSVG(qrData);
-    this.qrCode = `data:image/svg+xml;base64,${btoa(qrSvg)}`;
-    
-    await this.supabase
-      .from('whatsapp_sessions')
-      .update({
-        qr_code: this.qrCode,
-        status: 'waiting'
-      })
-      .eq('id', this.sessionId);
-
-    // Baileys-style connection timeout (2 minutes)
-    this.connectionTimeout = setTimeout(() => {
-      this.handleConnectionTimeout();
-    }, 120000);
-    
-    return this.qrCode;
-  }
-
-  generateQRCodeSVG(data) {
-    // Simple QR-like pattern generator
-    const size = 256;
-    const modules = 25; // 25x25 grid
-    const moduleSize = size / modules;
-    
-    let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect width="${size}" height="${size}" fill="#ffffff"/>`;
-    
-    // Generate pattern based on data hash
-    const hash = this.simpleHash(data);
-    
-    for (let row = 0; row < modules; row++) {
-      for (let col = 0; col < modules; col++) {
-        const x = col * moduleSize;
-        const y = row * moduleSize;
-        
-        // Corner patterns
-        if ((row < 7 && col < 7) || (row < 7 && col >= modules - 7) || (row >= modules - 7 && col < 7)) {
-          if ((row === 0 || row === 6 || col === 0 || col === 6) ||
-              (row >= 2 && row <= 4 && col >= 2 && col <= 4)) {
-            svg += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}" fill="#000"/>`;
-          }
+    try {
+      // Generate real QR code using qrcode library
+      const qrCodeBase64 = await qrcode(qrData, { 
+        size: 256,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
         }
-        // Data pattern
-        else if (row > 7 && col > 7 && row < modules - 8 && col < modules - 8) {
-          const pattern = (hash + row * modules + col) % 3;
-          if (pattern === 0) {
-            svg += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}" fill="#000"/>`;
-          }
-        }
-      }
+      });
+      
+      this.qrCode = qrCodeBase64;
+      
+      await this.supabase
+        .from('whatsapp_sessions')
+        .update({
+          qr_code: this.qrCode,
+          status: 'waiting'
+        })
+        .eq('id', this.sessionId);
+
+      // Baileys-style connection timeout (2 minutes)
+      this.connectionTimeout = setTimeout(() => {
+        this.handleConnectionTimeout();
+      }, 120000);
+      
+      return this.qrCode;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      throw error;
     }
-    
-    svg += `</svg>`;
-    return svg;
   }
 
-  simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
 
   async handleConnectionTimeout() {
     console.log(`Connection timeout for session: ${this.sessionName}`);
