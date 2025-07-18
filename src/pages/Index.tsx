@@ -22,6 +22,7 @@ interface AccommodationType {
   price: number;
   features: string[];
   is_active: boolean;
+  images?: string[];
 }
 
 const translations = {
@@ -145,7 +146,6 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     checkIn: '',
     checkOut: '',
@@ -165,7 +165,7 @@ const Index = () => {
   const loadAccommodationTypes = async () => {
     const { data, error } = await supabase
       .from('accommodation_types')
-      .select('*')
+      .select('*, images')
       .eq('is_active', true)
       .order('price');
 
@@ -191,7 +191,7 @@ const Index = () => {
           check_out: formData.checkOut,
           guests: formData.guests,
           name: formData.name,
-          email: formData.email,
+          email: `guest_${Date.now()}@vivoodtau.com`, // Автогенерация email
           phone: formData.phone,
           status: 'pending'
         }
@@ -212,7 +212,6 @@ const Index = () => {
       // Reset form and close dialog
       setFormData({
         name: '',
-        email: '',
         phone: '',
         checkIn: '',
         checkOut: '',
@@ -315,11 +314,22 @@ const Index = () => {
             ) : accommodationTypes.map((accommodation) => (
                 <Card key={accommodation.id} className="group hover:shadow-elegant transition-all duration-300 border-0 shadow-lg bg-card/80 backdrop-blur-sm hover:-translate-y-2">
                   <div className="relative overflow-hidden rounded-t-lg">
-                    <img 
-                      src="/placeholder.svg" 
-                      alt={accommodation.name_ru}
-                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {accommodation.images && accommodation.images.length > 0 ? (
+                      <img 
+                        src={`https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/${accommodation.images[0]}`}
+                        alt={accommodation.name_ru}
+                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src="/placeholder.svg" 
+                        alt={accommodation.name_ru}
+                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
                     <div className="absolute top-4 right-4">
                       <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                         <Star className="w-4 h-4" />
@@ -466,18 +476,6 @@ const Index = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.booking.email}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder={t.booking.email}
-                required
-                className="h-12"
-              />
-            </div>
             
             <div className="space-y-2">
               <Label htmlFor="phone">{t.booking.phone}</Label>

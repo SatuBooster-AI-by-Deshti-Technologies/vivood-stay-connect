@@ -6,6 +6,7 @@ import { AdminAccommodations } from "./AdminAccommodations";
 import { AdminClients } from "./AdminClients";
 import { NewBooking } from "./NewBooking";
 import { NewClient } from "./NewClient";
+import { EditClient } from "./EditClient";
 
 export function AdminRoutes() {
   return (
@@ -17,6 +18,7 @@ export function AdminRoutes() {
       <Route path="accommodations" element={<AdminAccommodations />} />
       <Route path="clients" element={<AdminClients />} />
       <Route path="clients/new" element={<NewClient />} />
+      <Route path="clients/edit/:id" element={<EditClient />} />
     </Routes>
   );
 }

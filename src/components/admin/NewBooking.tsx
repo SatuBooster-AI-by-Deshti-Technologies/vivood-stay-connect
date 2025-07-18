@@ -23,7 +23,6 @@ export function NewBooking() {
   
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     accommodation_type: '',
     check_in: '',
@@ -82,7 +81,7 @@ export function NewBooking() {
         .from('bookings')
         .insert([{
           name: formData.name,
-          email: formData.email,
+          email: `admin_${Date.now()}@vivoodtau.com`, // Автогенерация email для админа
           phone: formData.phone,
           accommodation_type: formData.accommodation_type,
           check_in: formData.check_in,
@@ -145,23 +144,13 @@ export function NewBooking() {
                 <User className="w-5 h-5 mr-2" />
                 Данные клиента
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Имя клиента *</label>
                   <Input 
                     placeholder="Иван Иванов" 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Email *</label>
-                  <Input 
-                    type="email" 
-                    placeholder="ivan@example.com" 
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
                   />
                 </div>

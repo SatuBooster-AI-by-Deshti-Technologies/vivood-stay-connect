@@ -268,11 +268,20 @@ export function AdminClients() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600 mb-1">Бронирований</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {client.totalBookings}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600 mb-1">Бронирований</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {client.totalBookings}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/admin/clients/edit/${client.email}`)}
+                    >
+                      Редактировать
+                    </Button>
                   </div>
                 </div>
               </CardContent>

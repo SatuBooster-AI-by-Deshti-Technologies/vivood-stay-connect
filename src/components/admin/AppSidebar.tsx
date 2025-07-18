@@ -76,7 +76,7 @@ export function AppSidebar() {
             <p className="text-sm text-muted-foreground">Эко-отель в горах</p>
           </div>
         )}
-        <SidebarTrigger />
+        <SidebarTrigger className="bg-background hover:bg-muted border border-border rounded-md p-2 transition-colors" />
       </div>
       
       <SidebarContent>
