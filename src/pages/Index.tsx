@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 
 type Language = 'kz' | 'ru' | 'en';
 
@@ -316,7 +316,7 @@ const Index = () => {
                   <div className="relative overflow-hidden rounded-t-lg">
                     {accommodation.images && accommodation.images.length > 0 ? (
                       <img 
-                        src={`https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/${accommodation.images[0]}`}
+                        src={api.getImageUrl(accommodation.images[0])}
                         alt={accommodation.name_ru}
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
