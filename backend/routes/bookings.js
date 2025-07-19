@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { getConnection } = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { createBookingAccountingEntries, logAuditAction } = require('./accounting');
 
 const router = express.Router();
 
