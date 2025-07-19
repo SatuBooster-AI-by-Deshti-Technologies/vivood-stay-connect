@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 // Get all accounting entries with pagination
-router.get('/entries', authMiddleware, async (req, res) => {
+router.get('/entries', authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -75,7 +75,7 @@ router.get('/entries', authMiddleware, async (req, res) => {
 });
 
 // Create accounting entry
-router.post('/entries', authMiddleware, async (req, res) => {
+router.post('/entries', authenticateToken, async (req, res) => {
   try {
     const { entry_date, account, description, debit, credit, booking_id } = req.body;
     
@@ -101,7 +101,7 @@ router.post('/entries', authMiddleware, async (req, res) => {
 });
 
 // Update accounting entry
-router.put('/entries/:id', authMiddleware, async (req, res) => {
+router.put('/entries/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { entry_date, account, description, debit, credit } = req.body;
@@ -130,7 +130,7 @@ router.put('/entries/:id', authMiddleware, async (req, res) => {
 });
 
 // Delete accounting entry
-router.delete('/entries/:id', authMiddleware, async (req, res) => {
+router.delete('/entries/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -153,7 +153,7 @@ router.delete('/entries/:id', authMiddleware, async (req, res) => {
 });
 
 // Get chart of accounts
-router.get('/accounts', authMiddleware, async (req, res) => {
+router.get('/accounts', authenticateToken, async (req, res) => {
   try {
     const [accounts] = await db.execute(
       `SELECT * FROM accounts WHERE is_active = TRUE ORDER BY account_code`
@@ -166,7 +166,7 @@ router.get('/accounts', authMiddleware, async (req, res) => {
 });
 
 // Create new account
-router.post('/accounts', authMiddleware, async (req, res) => {
+router.post('/accounts', authenticateToken, async (req, res) => {
   try {
     const { account_code, account_name, account_type, parent_account_id } = req.body;
 
@@ -187,7 +187,7 @@ router.post('/accounts', authMiddleware, async (req, res) => {
 });
 
 // Get trial balance
-router.get('/trial-balance', authMiddleware, async (req, res) => {
+router.get('/trial-balance', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -225,7 +225,7 @@ router.get('/trial-balance', authMiddleware, async (req, res) => {
 });
 
 // Get profit and loss statement
-router.get('/profit-loss', authMiddleware, async (req, res) => {
+router.get('/profit-loss', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
