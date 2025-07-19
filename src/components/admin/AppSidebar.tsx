@@ -4,7 +4,9 @@ import {
   Home, 
   BarChart3, 
   Plus,
-  Database
+  Database,
+  Calculator,
+  FileText
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -47,6 +49,16 @@ const menuItems = [
     title: "Клиенты", 
     url: "/admin/clients", 
     icon: Users 
+  },
+  { 
+    title: "Бухучет", 
+    url: "/admin/accounting", 
+    icon: Calculator 
+  },
+  { 
+    title: "Аудит", 
+    url: "/admin/audit", 
+    icon: FileText 
   },
 ];
 
