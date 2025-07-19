@@ -163,16 +163,11 @@ const Index = () => {
   }, []);
 
   const loadAccommodationTypes = async () => {
-    const { data, error } = await supabase
-      .from('accommodation_types')
-      .select('*, images')
-      .eq('is_active', true)
-      .order('price');
-
-    if (error) {
-      console.error('Error loading accommodation types:', error);
-    } else {
+    try {
+      const data = await api.getAccommodations();
       setAccommodationTypes(data || []);
+    } catch (error) {
+      console.error('Error loading accommodation types:', error);
     }
     setLoading(false);
   };
@@ -182,28 +177,18 @@ const Index = () => {
     setIsLoading(true);
     
     // Сохраняем бронирование в базу данных
-    const { data, error } = await supabase
-      .from('bookings')
-      .insert([
-        {
-          accommodation_type: formData.accommodationType,
-          check_in: formData.checkIn,
-          check_out: formData.checkOut,
-          guests: formData.guests,
-          name: formData.name,
-          email: `guest_${Date.now()}@vivoodtau.com`, // Автогенерация email
-          phone: formData.phone,
-          status: 'pending'
-        }
-      ]);
-
-    if (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось создать бронирование. Попробуйте еще раз.",
-        variant: "destructive"
+    try {
+      await api.createBooking({
+        accommodation_type: formData.accommodationType,
+        check_in: formData.checkIn,
+        check_out: formData.checkOut,
+        guests: formData.guests,
+        name: formData.name,
+        email: `guest_${Date.now()}@vivoodtau.com`, // Автогенерация email
+        phone: formData.phone,
+        status: 'pending'
       });
-    } else {
+
       toast({
         title: t.booking.thanks,
         description: t.booking.contact,
@@ -219,6 +204,12 @@ const Index = () => {
         accommodationType: ''
       });
       setIsOpen(false);
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать бронирование. Попробуйте еще раз.",
+        variant: "destructive"
+      });
     }
     
     setIsLoading(false);
