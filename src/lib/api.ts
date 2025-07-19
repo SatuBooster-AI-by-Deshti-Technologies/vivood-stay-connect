@@ -344,5 +344,47 @@ export const supabase = {
         data: { publicUrl: api.getImageUrl(path) }
       })
     })
+  },
+
+  // Accounting API
+  async getAccountingEntries(params?: any) {
+    return this.get('/accounting/entries', params);
+  },
+
+  async createAccountingEntry(data: any) {
+    return this.post('/accounting/entries', data);
+  },
+
+  async updateAccountingEntry(id: string, data: any) {
+    return this.put(`/accounting/entries/${id}`, data);
+  },
+
+  async deleteAccountingEntry(id: string) {
+    return this.delete(`/accounting/entries/${id}`);
+  },
+
+  async getAccounts() {
+    return this.get('/accounting/accounts');
+  },
+
+  async getTrialBalance(params?: any) {
+    return this.get('/accounting/trial-balance', params);
+  },
+
+  async getProfitLoss(params?: any) {
+    return this.get('/accounting/profit-loss', params);
+  },
+
+  // Audit API
+  async getAuditLogs(params?: any) {
+    return this.get('/audit/log', params);
+  },
+
+  async getAuditStats(params?: any) {
+    return this.get('/audit/stats', params);
+  },
+
+  async getAuditRecord(table: string, id: string) {
+    return this.get(`/audit/record/${table}/${id}`);
   }
 };
