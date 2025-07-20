@@ -8,7 +8,12 @@ const { connectDB } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware с отладкой
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin')}`);
+  next();
+});
+
 app.use(cors({
   origin: [
     'https://be078951-f877-4538-9775-d0a2307d5c57.lovableproject.com',
@@ -21,6 +26,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
