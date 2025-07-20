@@ -27,6 +27,11 @@ app.use('/api/stats', require('./routes/stats'));
 app.use('/api/accounting', require('./routes/accounting').router);
 app.use('/api/audit', require('./routes/audit'));
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Vivood Backend API is running', timestamp: new Date().toISOString() });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
