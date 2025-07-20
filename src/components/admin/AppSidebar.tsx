@@ -84,7 +84,7 @@ export function AppSidebar() {
       <div className="p-4">
 
       {!collapsed && (
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-primary">Vivood Tau</h2>
             <p className="text-sm text-muted-foreground">Эко-отель в горах</p>
