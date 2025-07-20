@@ -95,12 +95,9 @@ export default function Admin() {
           {/* Header */}
           <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
             <h1 className="text-xl font-semibold text-gray-900">
-              CRM - Гостиничный бизнес
+              SatuCRM
             </h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Добро пожаловать, {profile?.name}
-              </span>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Выйти

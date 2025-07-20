@@ -11,8 +11,8 @@ export function AdminDashboard() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Vivood Tau Dashboard</h1>
-            <p className="text-gray-600">Добро пожаловать в панель управления эко-отелем</p>
+            <h1 className="text-3xl font-bold text-gray-900">Vivood Tau</h1>
+            <p className="text-gray-600">Добро пожаловать в панель управления</p>
           </div>
           <Badge variant="outline" className="text-lg px-4 py-2">
             🏔️ Горный курорт

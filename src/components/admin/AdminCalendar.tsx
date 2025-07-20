@@ -185,7 +185,7 @@ export function AdminCalendar() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Поиск по имени, email, телефону..."
+                placeholder="Поиск по имени, телефону..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
