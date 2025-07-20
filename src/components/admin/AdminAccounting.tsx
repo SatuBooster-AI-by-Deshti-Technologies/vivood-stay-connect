@@ -82,16 +82,44 @@ export function AdminAccounting() {
     try {
       setLoading(true);
       const [entriesData, accountsData, trialBalanceData, profitLossData] = await Promise.all([
-        api.get('/accounting/entries'),
-        api.get('/accounting/accounts'),
-        api.get('/accounting/trial-balance'),
-        api.get('/accounting/profit-loss')
+        api.getAccountingEntries(),
+        api.getAccounts(),
+        api.getTrialBalance(),
+        api.getProfitLoss()
       ]);
       
-      setEntries(entriesData.entries || []);
-      setAccounts(accountsData || []);
-      setTrialBalance(trialBalanceData || []);
-      setProfitLoss(profitLossData || null);
+      setEntries((entriesData || []).map(entry => ({
+        id: parseInt(entry.id),
+        entry_date: entry.date,
+        account: entry.debit_account,
+        account_name: entry.debit_account,
+        description: entry.description,
+        debit: parseFloat(entry.amount.toString()),
+        credit: 0,
+        created_at: entry.created_at
+      })));
+      setAccounts((accountsData || []).map(acc => ({
+        id: parseInt(acc.id),
+        account_code: acc.code,
+        account_name: acc.name,
+        account_type: acc.account_type,
+        is_active: acc.is_active
+      })));
+      setTrialBalance((trialBalanceData || []).map(tb => ({
+        account: tb.account,
+        account_name: tb.account,
+        account_type: 'unknown',
+        total_debit: tb.debit,
+        total_credit: tb.credit,
+        balance: tb.debit - tb.credit
+      })));
+      setProfitLoss(profitLossData ? {
+        revenue: [],
+        expenses: [],
+        totalRevenue: profitLossData.revenue,
+        totalExpenses: profitLossData.expenses,
+        netIncome: profitLossData.profit
+      } : null);
     } catch (error) {
       console.error('Error loading accounting data:', error);
       toast({
@@ -129,13 +157,13 @@ export function AdminAccounting() {
       };
 
       if (editingEntry) {
-        await api.put(`/accounting/entries/${editingEntry.id}`, payload);
+        await api.updateAccountingEntry(editingEntry.id.toString(), payload);
         toast({
           title: "Успех",
           description: "Проводка обновлена"
         });
       } else {
-        await api.post('/accounting/entries', payload);
+        await api.createAccountingEntry(payload);
         toast({
           title: "Успех",
           description: "Проводка создана"
@@ -179,7 +207,7 @@ export function AdminAccounting() {
     if (!confirm('Вы уверены, что хотите удалить эту проводку?')) return;
     
     try {
-      await api.delete(`/accounting/entries/${id}`);
+      await api.deleteAccountingEntry(id.toString());
       toast({
         title: "Успех",
         description: "Проводка удалена"

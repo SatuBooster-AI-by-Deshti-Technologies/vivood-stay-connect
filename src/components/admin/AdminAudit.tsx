@@ -73,12 +73,25 @@ export function AdminAudit() {
         ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ''))
       });
 
-      const response = await api.get(`/audit/log?${queryParams}`);
-      setLogs(response.logs || []);
+      const response = await api.getAuditLogs();
+      setLogs((response || []).map(log => ({
+        id: parseInt(log.id),
+        user_id: parseInt(log.user_id || '0'),
+        user_name: 'Пользователь',
+        user_email: '',
+        action: log.action,
+        table_name: log.table_name,
+        record_id: parseInt(log.record_id),
+        old_values: log.old_values,
+        new_values: log.new_values,
+        ip_address: '127.0.0.1',
+        user_agent: 'System',
+        created_at: log.timestamp
+      })));
       setPagination(prev => ({
         ...prev,
-        total: response.pagination?.total || 0,
-        pages: response.pagination?.pages || 0
+        total: response.length || 0,
+        pages: Math.ceil((response.length || 0) / pagination.limit)
       }));
     } catch (error) {
       console.error('Error loading audit data:', error);
@@ -94,8 +107,18 @@ export function AdminAudit() {
 
   const loadAuditStats = async () => {
     try {
-      const response = await api.get('/audit/stats');
-      setStats(response);
+      const response = await api.getAuditStats();
+      setStats({
+        total: response.total,
+        actionStats: [
+          { action: 'INSERT', count: response.inserts },
+          { action: 'UPDATE', count: response.updates },
+          { action: 'DELETE', count: response.deletes }
+        ],
+        tableStats: [],
+        userStats: [],
+        dailyActivity: []
+      });
     } catch (error) {
       console.error('Error loading audit stats:', error);
     }
