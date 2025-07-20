@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // Get audit log with pagination and filters
-router.get('/log', authMiddleware, async (req, res) => {
+router.get('/log', authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -89,7 +89,7 @@ router.get('/log', authMiddleware, async (req, res) => {
 });
 
 // Get audit statistics
-router.get('/stats', authMiddleware, async (req, res) => {
+router.get('/stats', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -160,7 +160,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
 });
 
 // Get audit details for specific record
-router.get('/record/:table/:id', authMiddleware, async (req, res) => {
+router.get('/record/:table/:id', authenticateToken, async (req, res) => {
   try {
     const { table, id } = req.params;
     
