@@ -30,7 +30,7 @@ const translations = {
   kz: {
     hero: {
       title: "VIVOOD TAU",
-      subtitle: "ЗОНА ОТДЫХА",
+      subtitle: "ДЕМАЛЫС ОРНЫ",
       description: "Түркістан облысындағы ең биік демалыс орны. Сайрам шыңы - 4236 м биіктікте.",
       bookNow: "Үй таңдау"
     },
@@ -40,7 +40,7 @@ const translations = {
     },
     rooms: {
       glamping: "Глэмпинг (дөңгелек домик)",
-      square: "Квадрат домик",
+      square: "Квадрат үйшік",
       vip: "VIP Капсула кинотеатрмен",
       workdays: "Жұмыс күндері",
       weekends: "Демалыс күндері",
