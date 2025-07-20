@@ -255,9 +255,7 @@ const Index = () => {
         <div className="relative z-10 text-center max-w-6xl mx-auto px-4">
           {/* Logo */}
           <div className="mb-8 animate-fade-in">
-            <div className="w-32 h-32 mx-auto mb-6 bg-primary/10 rounded-2xl flex items-center justify-center shadow-elegant backdrop-blur-sm border border-primary/20">
-              <span className="text-5xl font-bold bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">V</span>
-            </div>
+
             <h1 className="text-5xl md:text-7xl font-bold mb-2 text-foreground tracking-wide">
               {t.hero.title}
             </h1>
@@ -536,9 +534,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-card/50 backdrop-blur-sm py-12 px-4 border-t border-border/50">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-xl flex items-center justify-center">
-            <span className="text-2xl font-bold bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">V</span>
-          </div>
+
           <h3 className="text-2xl font-bold mb-2 text-foreground">VIVOOD TAU</h3>
           <p className="text-muted-foreground mb-6">Глэмпинг в горах Шымкента</p>
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
