@@ -1,5 +1,5 @@
 // API клиент для замены Supabase
-const API_BASE = import.meta.env.VITE_API_URL || 'http://194.32.141.216:3005/api';
+const API_BASE = 'http://194.32.141.216:3005/api';
 
 interface User {
   id: string;

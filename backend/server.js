@@ -9,7 +9,18 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://be078951-f877-4538-9775-d0a2307d5c57.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    /^https:\/\/.*\.lovableproject\.com$/,
+    /^https:\/\/.*\.vercel\.app$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
