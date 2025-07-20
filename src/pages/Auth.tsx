@@ -28,7 +28,7 @@ export default function Auth() {
     // Слушаем изменения авторизации
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate('/');
+        navigate('/admin');
       }
     });
 
