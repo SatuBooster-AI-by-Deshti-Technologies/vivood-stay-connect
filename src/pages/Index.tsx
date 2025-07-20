@@ -310,7 +310,7 @@ const Index = () => {
                         alt={accommodation.name_ru}
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.src = '/background-image.jpg';
                         }}
                       />
                     ) : (
