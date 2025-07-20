@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
+import { Link } from 'react-router-dom';
 
 type Language = 'kz' | 'ru' | 'en';
 
@@ -550,8 +551,11 @@ const Index = () => {
               <span>Сайрам-Үгем паркі</span>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-border/30 text-xs text-muted-foreground">
-            © 2024 Vivood Tau. Все права защищены.
+          <div className="mt-8 pt-6 border-t border-border/30 text-xs text-muted-foreground flex justify-between items-center">
+            <span>© 2024 Vivood Tau. Все права защищены.</span>
+            <Link to="/auth" className="text-primary hover:underline">
+              Админ-панель
+            </Link>
           </div>
         </div>
       </footer>
