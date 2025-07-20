@@ -82,13 +82,22 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <div className="p-4">
-        {!collapsed && (
-          <div className="mb-6">
+
+      {!collapsed && (
+        <div className="mb-6 flex items-center justify-between">
+          <div>
             <h2 className="text-xl font-bold text-primary">Vivood Tau</h2>
             <p className="text-sm text-muted-foreground">Эко-отель в горах</p>
           </div>
-        )}
-        <SidebarTrigger className="bg-background hover:bg-muted border border-border rounded-md p-2 transition-colors" />
+          <SidebarTrigger className="ml-2 bg-background hover:bg-muted border border-border rounded-md p-2 transition-colors" />
+        </div>
+      )}
+      {collapsed && (
+        <div className="mb-6 flex items-center justify-center">
+          <SidebarTrigger className="bg-background hover:bg-muted border border-border rounded-md p-2 transition-colors" />
+        </div>
+      )}
+
       </div>
       
       <SidebarContent>
