@@ -276,6 +276,8 @@ const Index = () => {
             >
               {t.hero.bookNow}
             </Button>
+            
+            <a href="https://wa.me/77784440440?text=Здравствуйте%2C%20у%20меня%20вопрос%20по%20аренде%20мопеда" target="_blank" rel="noopener noreferrer"></a>
             <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-2 hover:bg-primary/5 backdrop-blur-sm">
               <Phone className="w-5 h-5 mr-2" />
               +7 (778) 444-04-40
