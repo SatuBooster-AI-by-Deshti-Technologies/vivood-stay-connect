@@ -31,7 +31,7 @@ const translations = {
     hero: {
       title: "VIVOOD TAU",
       subtitle: "ЗОНА ОТДЫХА",
-      description: "Түркістан облысындағы ең биік демалыс орны. Сайрам шыңы - 4236 м",
+      description: "Түркістан облысындағы ең биік демалыс орны. Сайрам шыңы - 4236 м биіктікте.",
       bookNow: "Үй таңдау"
     },
     accommodations: {
@@ -68,7 +68,7 @@ const translations = {
     hero: {
       title: "VIVOOD TAU",
       subtitle: "ЗОНА ОТДЫХА",
-      description: "Уникальный глэмпинг в сердце гор Сайрам-Өгем. Испытайте комфорт среди дикой природы на высоте 2000+ метров с панорамным видом на Сайрам шыңы (4236 м).",
+      description: "Уникальный глэмпинг в сердце гор Сайрам-Өгем. Испытайте комфорт среди дикой природы.",
       bookNow: "Выбрать домик"
     },
     accommodations: {
@@ -105,7 +105,7 @@ const translations = {
     hero: {
       title: "VIVOOD TAU",
       subtitle: "RECREATION ZONE",
-      description: "Unique glamping in the heart of Sairam-Өgem mountains. Experience comfort amidst wild nature at 2000+ meters altitude with panoramic views of Sairam peak (4236 m).",
+      description: "Unique glamping in the heart of Sairam-Ogem mountains. Experience comfort amidst wild nature.",
       bookNow: "Choose Accommodation"
     },
     accommodations: {
@@ -278,7 +278,7 @@ const Index = () => {
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-2 hover:bg-primary/5 backdrop-blur-sm">
               <Phone className="w-5 h-5 mr-2" />
-              +7 (707) 123-45-67
+              +7 (778) 444-04-40
             </Button>
           </div>
         </div>
@@ -425,12 +425,12 @@ const Index = () => {
             Расположение
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Каскелена выше, Сайрам-Үгем Ұлттық паркінің ішінде
+            Сайрам-Үгем Ұлттық паркінің ішінде
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-card/50 backdrop-blur-sm p-6 rounded-lg">
               <Car className="w-8 h-8 text-primary mx-auto mb-2" />
-              <p className="font-semibold">80 км от Шымкента</p>
+              <p className="font-semibold">80 км - Шымкент</p>
             </div>
             <div className="bg-card/50 backdrop-blur-sm p-6 rounded-lg">
               <Mountain className="w-8 h-8 text-secondary mx-auto mb-2" />
@@ -540,7 +540,7 @@ const Index = () => {
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>+7 (707) 123-45-67</span>
+              <span>+7 (778) 444-04-40</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
@@ -548,10 +548,7 @@ const Index = () => {
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-border/30 text-xs text-muted-foreground flex justify-between items-center">
-            <span>© 2024 Vivood Tau. Все права защищены.</span>
-            <Link to="/auth" className="text-primary hover:underline">
-              Админ-панель
-            </Link>
+            <span>© 2025 SatuBooster. Все права защищены.</span>
           </div>
         </div>
       </footer>
