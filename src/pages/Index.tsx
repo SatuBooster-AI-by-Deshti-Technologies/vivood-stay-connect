@@ -245,7 +245,7 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" 
              style={{ background: 'var(--gradient-hero)' }}></div>
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover bg-center opacity-20"></div>
+        <div className="absolute inset-0 bg-[url('/background-image.jpg')] bg-cover bg-center opacity-20"></div>
         
         {/* Floating Elements */}
         <Mountain className="absolute top-20 left-10 w-32 h-32 text-primary/20 animate-pulse" />
