@@ -95,7 +95,7 @@ export default function Admin() {
           {/* Header */}
           <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
             <h1 className="text-xl font-semibold text-gray-900">
-              SatuCRM
+              SatuBooster
             </h1>
             <div className="flex items-center space-x-4">
               <Button variant="outline" onClick={handleLogout}>

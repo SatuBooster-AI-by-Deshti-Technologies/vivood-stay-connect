@@ -90,7 +90,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">SatuCRM</CardTitle>
+          <CardTitle className="text-center">SatuBooster</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="space-y-4">
