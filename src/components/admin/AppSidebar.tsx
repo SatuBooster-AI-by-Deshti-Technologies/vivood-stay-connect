@@ -6,7 +6,8 @@ import {
   Plus,
   Database,
   Calculator,
-  FileText
+  FileText,
+  MessageCircle
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -54,6 +55,11 @@ const menuItems = [
     title: "Бухучет", 
     url: "/admin/accounting", 
     icon: Calculator 
+  },
+  { 
+    title: "WhatsApp", 
+    url: "/admin/whatsapp", 
+    icon: MessageCircle 
   },
 ];
 

@@ -250,6 +250,144 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          message_template: string
+          name: string
+          send_date: string | null
+          sent_count: number
+          target_audience: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_template: string
+          name: string
+          send_date?: string | null
+          sent_count?: number
+          target_audience?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_template?: string
+          name?: string
+          send_date?: string | null
+          sent_count?: number
+          target_audience?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_messages: {
+        Row: {
+          campaign_id: string
+          delivery_status: string
+          id: string
+          sent_at: string
+          session_id: string
+        }
+        Insert: {
+          campaign_id: string
+          delivery_status?: string
+          id?: string
+          sent_at?: string
+          session_id: string
+        }
+        Update: {
+          campaign_id?: string
+          delivery_status?: string
+          id?: string
+          sent_at?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_links: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          payment_screenshot: string | null
+          payment_url: string | null
+          session_id: string
+          status: string
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          payment_screenshot?: string | null
+          payment_url?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          payment_screenshot?: string | null
+          payment_url?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -315,6 +453,122 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          ai_response: string | null
+          content: string | null
+          created_at: string
+          id: string
+          is_from_client: boolean
+          message_type: string
+          session_id: string
+        }
+        Insert: {
+          ai_response?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_from_client?: boolean
+          message_type: string
+          session_id: string
+        }
+        Update: {
+          ai_response?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_from_client?: boolean
+          message_type?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_sessions: {
+        Row: {
+          accommodation_type: string | null
+          blocked_until: string | null
+          booking_id: string | null
+          check_in_date: string | null
+          check_out_date: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          email: string | null
+          guests: number | null
+          id: string
+          is_blocked: boolean
+          last_interaction: string
+          notes: string | null
+          phone_number: string
+          session_stage: string
+          total_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          accommodation_type?: string | null
+          blocked_until?: string | null
+          booking_id?: string | null
+          check_in_date?: string | null
+          check_out_date?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          email?: string | null
+          guests?: number | null
+          id?: string
+          is_blocked?: boolean
+          last_interaction?: string
+          notes?: string | null
+          phone_number: string
+          session_stage?: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accommodation_type?: string | null
+          blocked_until?: string | null
+          booking_id?: string | null
+          check_in_date?: string | null
+          check_out_date?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          email?: string | null
+          guests?: number | null
+          id?: string
+          is_blocked?: boolean
+          last_interaction?: string
+          notes?: string | null
+          phone_number?: string
+          session_stage?: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_sessions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
