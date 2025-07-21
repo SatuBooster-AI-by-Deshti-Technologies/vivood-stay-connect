@@ -1,6 +1,6 @@
 import { StatsOverview } from './StatsOverview';
 import { QuickActions } from './QuickActions';
-import { TaskManager } from './TaskManager';
+import { TaskBoard } from './TaskBoard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,7 @@ export function AdminDashboard() {
   });
 
   if (showTaskManager) {
-    return <TaskManager />;
+    return <TaskBoard />;
   }
 
   return (

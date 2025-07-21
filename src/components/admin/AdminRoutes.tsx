@@ -7,6 +7,7 @@ import { AdminClients } from "./AdminClients";
 import { NewBooking } from "./NewBooking";
 import { NewClient } from "./NewClient";
 import { EditClient } from "./EditClient";
+import { EditClient } from "./EditClient";
 import { AdminAccounting } from "./AdminAccounting";
 import { AdminAudit } from "./AdminAudit";
 

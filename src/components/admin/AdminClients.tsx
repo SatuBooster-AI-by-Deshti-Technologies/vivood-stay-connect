@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Users, Mail, Phone, Calendar, Plus } from 'lucide-react';
+import { Users, Mail, Phone, Calendar, Plus, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface Client {
+  id?: string;
   email: string;
   name: string;
   phone: string;
@@ -23,6 +26,7 @@ export function AdminClients() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     loadClients();
@@ -60,6 +64,7 @@ export function AdminClients() {
       // Добавляем клиентов из таблицы clients
       allClientsData.forEach(client => {
         clientsMap.set(client.email, {
+          id: client.id,
           email: client.email,
           name: client.name,
           phone: client.phone,
@@ -113,6 +118,34 @@ export function AdminClients() {
       setClients(filtered);
     }
   }, [searchTerm, allClients]);
+
+  const deleteClient = async (clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId);
+
+      if (error) {
+        console.error('Error deleting client:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось удалить клиента",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Успешно",
+        description: "Клиент удален"
+      });
+
+      await loadClients();
+    } catch (error) {
+      console.error('Error deleting client:', error);
+    }
+  };
 
   const getSourceText = (source: string) => {
     switch (source) {
@@ -275,13 +308,44 @@ export function AdminClients() {
                         {client.totalBookings}
                       </p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate(`/admin/clients/edit/${client.email}`)}
-                    >
-                      Редактировать
-                    </Button>
+                    <div className="flex gap-2">
+                      {client.id && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`/admin/clients/edit/${client.id}`)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Изменить
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Удалить клиента?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Это действие нельзя отменить. Клиент "{client.name}" будет удален навсегда.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteClient(client.id!)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Удалить
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

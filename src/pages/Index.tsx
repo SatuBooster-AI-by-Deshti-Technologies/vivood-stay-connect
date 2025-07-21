@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 
 type Language = 'kz' | 'ru' | 'en';
@@ -165,37 +165,101 @@ const Index = () => {
 
   const loadAccommodationTypes = async () => {
     try {
-      const data = await api.getAccommodations();
-      setAccommodationTypes(data || []);
+      const { data, error } = await supabase
+        .from('accommodation_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('price');
+
+      if (error) {
+        console.error('Error loading accommodation types:', error);
+      } else {
+        setAccommodationTypes(data || []);
+      }
     } catch (error) {
       console.error('Error loading accommodation types:', error);
     }
     setLoading(false);
   };
 
+  const checkAvailability = async (accommodationType: string, checkIn: string, checkOut: string) => {
+    try {
+      const { data, error } = await supabase
+        .rpc('check_accommodation_availability', {
+          accommodation_name: accommodationType,
+          check_in_date: checkIn,
+          check_out_date: checkOut
+        });
+
+      if (error) {
+        console.error('Error checking availability:', error);
+        return false;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Сохраняем бронирование в базу данных
     try {
-      await api.createBooking({
-        accommodation_type: formData.accommodationType,
-        check_in: formData.checkIn,
-        check_out: formData.checkOut,
-        guests: formData.guests,
-        name: formData.name,
-        email: `guest_${Date.now()}@vivoodtau.com`, // Автогенерация email
-        phone: formData.phone,
-        status: 'pending'
-      });
+      // Проверяем доступность
+      const isAvailable = await checkAvailability(
+        formData.accommodationType,
+        formData.checkIn,
+        formData.checkOut
+      );
+
+      if (!isAvailable) {
+        toast({
+          title: "Недоступно",
+          description: "Это размещение уже забронировано на выбранные даты. Пожалуйста, выберите другие даты.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Находим цену размещения
+      const accommodation = accommodationTypes.find(a => a.name_ru === formData.accommodationType);
+      const pricePerNight = accommodation?.price || 0;
+      const nights = Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+      const totalPrice = pricePerNight * nights;
+
+      const { error } = await supabase
+        .from('bookings')
+        .insert([{
+          accommodation_type: formData.accommodationType,
+          check_in: formData.checkIn,
+          check_out: formData.checkOut,
+          guests: formData.guests,
+          name: formData.name,
+          email: `guest_${Date.now()}@vivoodtau.com`,
+          phone: formData.phone,
+          status: 'pending',
+          total_price: totalPrice
+        }]);
+
+      if (error) {
+        console.error('Error creating booking:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось создать бронирование. Попробуйте еще раз.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       toast({
         title: t.booking.thanks,
         description: t.booking.contact,
       });
       
-      // Reset form and close dialog
       setFormData({
         name: '',
         phone: '',
@@ -206,6 +270,7 @@ const Index = () => {
       });
       setIsOpen(false);
     } catch (error) {
+      console.error('Error creating booking:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось создать бронирование. Попробуйте еще раз.",
@@ -219,6 +284,14 @@ const Index = () => {
   const openBookingDialog = (accommodationType: string) => {
     setFormData(prev => ({ ...prev, accommodationType }));
     setIsOpen(true);
+  };
+
+  const isAccommodationAvailable = async (accommodationType: string) => {
+    // Проверяем на сегодня и завтра как пример
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    return await checkAvailability(accommodationType, today, tomorrow);
   };
 
   const scrollToAccommodations = () => {
@@ -307,14 +380,22 @@ const Index = () => {
                 <Card key={accommodation.id} className="group hover:shadow-elegant transition-all duration-300 border-0 shadow-lg bg-card/80 backdrop-blur-sm hover:-translate-y-2">
                   <div className="relative overflow-hidden rounded-t-lg">
                     {accommodation.images && accommodation.images.length > 0 ? (
-                      <img 
-                        src={api.getImageUrl(accommodation.images[0])}
-                        alt={accommodation.name_ru}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = '/background-image.jpg';
-                        }}
-                      />
+                      <div className="relative">
+                        <img 
+                          src={accommodation.images[0]}
+                          alt={accommodation.name_ru}
+                          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src = '/background-image.jpg';
+                          }}
+                        />
+                        {accommodation.images.length > 1 && (
+                          <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
+                            <Camera className="w-3 h-3" />
+                            {accommodation.images.length}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <img 
                         src="/placeholder.svg" 

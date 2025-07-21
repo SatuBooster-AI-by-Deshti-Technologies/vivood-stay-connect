@@ -55,11 +55,6 @@ const menuItems = [
     url: "/admin/accounting", 
     icon: Calculator 
   },
-  { 
-    title: "Аудит", 
-    url: "/admin/audit", 
-    icon: FileText 
-  },
 ];
 
 

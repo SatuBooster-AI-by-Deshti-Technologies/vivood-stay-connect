@@ -101,10 +101,17 @@ export function AdminBookings() {
         return;
       }
 
-      toast({
-        title: "Успешно",
-        description: "Статус бронирования обновлен"
-      });
+      if (newStatus === 'confirmed') {
+        toast({
+          title: "Успешно",
+          description: "Бронирование подтверждено и добавлена бухгалтерская запись"
+        });
+      } else {
+        toast({
+          title: "Успешно", 
+          description: "Статус бронирования обновлен"
+        });
+      }
 
       await loadBookings();
     } catch (error) {

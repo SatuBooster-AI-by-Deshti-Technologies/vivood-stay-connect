@@ -321,6 +321,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_accommodation_availability: {
+        Args: {
+          accommodation_name: string
+          check_in_date: string
+          check_out_date: string
+        }
+        Returns: boolean
+      }
       create_activity: {
         Args: {
           activity_type: string
