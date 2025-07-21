@@ -142,35 +142,32 @@ export type Database = {
           },
         ]
       }
-      audit_logs: {
+      activities: {
         Row: {
-          action: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string | null
           id: string
-          new_values: Json | null
-          old_values: Json | null
-          record_id: string
-          table_name: string
-          timestamp: string
+          type: string
           user_id: string | null
         }
         Insert: {
-          action: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id: string
-          table_name: string
-          timestamp?: string
+          type: string
           user_id?: string | null
         }
         Update: {
-          action?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string
-          table_name?: string
-          timestamp?: string
+          type?: string
           user_id?: string | null
         }
         Relationships: []
@@ -280,11 +277,59 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      create_activity: {
+        Args: {
+          activity_type: string
+          activity_description: string
+          entity_id?: string
+          entity_type?: string
+        }
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

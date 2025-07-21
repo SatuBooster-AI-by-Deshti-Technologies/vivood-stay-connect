@@ -424,43 +424,108 @@ class APIClient {
     };
   }
 
-  // Audit methods
-  async getAuditLogs(params?: any) {
+  // Tasks methods
+  async getTasks() {
     const { data, error } = await supabaseClient
-      .from('audit_logs')
+      .from('tasks')
       .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(100);
-
+      .order('created_at', { ascending: false });
+    
     if (error) throw new Error(error.message);
     return data;
   }
 
-  async getAuditStats(params?: any) {
-    const { data, error } = await supabaseClient
-      .from('audit_logs')
-      .select('action', { count: 'exact' });
+  async createTask(task: {
+    title: string;
+    description?: string;
+    priority: 'high' | 'normal' | 'low';
+    due_date?: string;
+  }) {
+    const { data: session } = await supabaseClient.auth.getSession();
+    if (!session.session?.user) throw new Error('Not authenticated');
 
+    const { data, error } = await supabaseClient
+      .from('tasks')
+      .insert([{ ...task, created_by: session.session.user.id }])
+      .select()
+      .single();
+    
     if (error) throw new Error(error.message);
     
-    const stats = {
-      total: data.length,
-      inserts: data.filter(log => log.action === 'INSERT').length,
-      updates: data.filter(log => log.action === 'UPDATE').length,
-      deletes: data.filter(log => log.action === 'DELETE').length
-    };
-
-    return stats;
+    // Create activity
+    await supabaseClient.rpc('create_activity', {
+      activity_type: 'task_completed',
+      activity_description: `Создана задача: ${task.title}`,
+      entity_id: data.id,
+      entity_type: 'task'
+    });
+    
+    return data;
   }
 
-  async getAuditRecord(table: string, id: string) {
+  async updateTask(id: string, updates: {
+    title?: string;
+    description?: string;
+    priority?: 'high' | 'normal' | 'low';
+    status?: 'pending' | 'in_progress' | 'completed';
+    due_date?: string;
+  }) {
     const { data, error } = await supabaseClient
-      .from('audit_logs')
-      .select('*')
-      .eq('table_name', table)
-      .eq('record_id', id)
-      .order('timestamp', { ascending: false });
+      .from('tasks')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    
+    if (updates.status === 'completed') {
+      await supabaseClient.rpc('create_activity', {
+        activity_type: 'task_completed',
+        activity_description: `Задача выполнена: ${data.title}`,
+        entity_id: data.id,
+        entity_type: 'task'
+      });
+    }
+    
+    return data;
+  }
 
+  async deleteTask(id: string) {
+    const { error } = await supabaseClient
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw new Error(error.message);
+    return { success: true };
+  }
+
+  // Activities methods
+  async getActivities() {
+    const { data, error } = await supabaseClient
+      .from('activities')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async createActivity(activity: {
+    type: string;
+    description: string;
+    entity_id?: string;
+    entity_type?: string;
+  }) {
+    const { data, error } = await supabaseClient.rpc('create_activity', {
+      activity_type: activity.type,
+      activity_description: activity.description,
+      entity_id: activity.entity_id,
+      entity_type: activity.entity_type
+    });
+    
     if (error) throw new Error(error.message);
     return data;
   }

@@ -107,7 +107,7 @@ export function StatsOverview() {
     {
       title: 'Доход за месяц',
       value: `${stats.monthlyRevenue.toLocaleString()} ₸`,
-      icon: DollarSign,
+      icon: () => <span className="text-xl">₸</span>,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
     },
