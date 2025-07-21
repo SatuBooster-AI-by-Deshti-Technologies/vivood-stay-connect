@@ -96,7 +96,7 @@ export default function Admin() {
           <header className="h-16 flex items-center justify-between border-b px-4 md:px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="mr-2" />
-              <h1 className="font-semibold text-lg">Панель управления</h1>
+              <h1 className="font-semibold text-lg">SatuBooster</h1>
             </div>
             <div className="flex items-center gap-4">
               <Header />
