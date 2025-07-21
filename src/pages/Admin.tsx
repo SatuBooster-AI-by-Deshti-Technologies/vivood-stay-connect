@@ -1,6 +1,7 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/admin/AppSidebar";
 import { AdminRoutes } from "@/components/admin/AdminRoutes";
+import { Header } from "@/components/admin/Header";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,27 +90,26 @@ export default function Admin() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
-            <h1 className="text-xl font-semibold text-gray-900">
-              SatuBooster
-            </h1>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" onClick={handleLogout}>
+        <main className="flex-1">
+          <header className="h-16 flex items-center justify-between border-b px-4 md:px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="mr-2" />
+              <h1 className="font-semibold text-lg">Панель управления</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <Header />
+              <Button variant="outline" onClick={handleLogout} size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
                 Выйти
               </Button>
             </div>
           </header>
-
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto">
+          <div className="overflow-auto">
             <AdminRoutes />
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     </SidebarProvider>
   );
