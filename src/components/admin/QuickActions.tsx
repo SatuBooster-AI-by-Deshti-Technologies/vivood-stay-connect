@@ -25,7 +25,7 @@ export function QuickActions() {
     },
     {
       title: 'Календарь',
-      description: 'Посмотреть расписание',
+      description: '',
       icon: Calendar,
       action: () => navigate('/admin/calendar'),
       color: 'bg-purple-500',
@@ -33,7 +33,7 @@ export function QuickActions() {
     },
     {
       title: 'Добавить домик',
-      description: 'Создать новый тип размещения',
+      description: '',
       icon: Home,
       action: () => navigate('/admin/accommodations'),
       color: 'bg-orange-500',
