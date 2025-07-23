@@ -8,8 +8,8 @@ export function QuickActions() {
 
   const actions = [
     {
-      title: 'Новое бронирование',
-      description: 'Быстрое создание бронирования',
+      title: 'Новый брон',
+      description: '',
       icon: Plus,
       action: () => navigate('/admin/bookings/new'),
       color: 'bg-blue-500',
