@@ -492,14 +492,14 @@ export function AdminAccommodations() {
               <div>
                 <Label htmlFor="category">Категория</Label>
                 <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  value={formData.category || "none"} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Выберите категорию" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Без категории</SelectItem>
+                    <SelectItem value="none">Без категории</SelectItem>
                     <SelectItem value="VIP">VIP</SelectItem>
                     <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
                   </SelectContent>
