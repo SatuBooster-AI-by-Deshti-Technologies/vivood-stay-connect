@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Home, DollarSign, Tag, Images } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ImageUploader } from './ImageUploader';
 
@@ -26,6 +27,9 @@ interface AccommodationType {
   image_url: string;
   images: string[];
   created_at: string;
+  category?: string;
+  total_quantity: number;
+  available_quantity: number;
 }
 
 export function AdminAccommodations() {
@@ -46,7 +50,10 @@ export function AdminAccommodations() {
     features: [] as string[],
     is_active: true,
     image_url: '',
-    images: [] as string[]
+    images: [] as string[],
+    category: '',
+    total_quantity: 1,
+    available_quantity: 1
   });
 
   useEffect(() => {
@@ -147,7 +154,10 @@ export function AdminAccommodations() {
       features: accommodation.features || [],
       is_active: accommodation.is_active,
       image_url: accommodation.image_url || '',
-      images: accommodation.images || []
+      images: accommodation.images || [],
+      category: accommodation.category || '',
+      total_quantity: accommodation.total_quantity || 1,
+      available_quantity: accommodation.available_quantity || 1
     });
     setIsDialogOpen(true);
   };
@@ -196,7 +206,10 @@ export function AdminAccommodations() {
       features: [],
       is_active: true,
       image_url: '',
-      images: []
+      images: [],
+      category: '',
+      total_quantity: 1,
+      available_quantity: 1
     });
   };
 
@@ -324,12 +337,21 @@ export function AdminAccommodations() {
                     {accommodation.images.length}
                   </div>
                 )}
-                <Badge 
-                  variant={accommodation.is_active ? 'default' : 'secondary'}
-                  className="absolute top-2 left-2"
-                >
-                  {accommodation.is_active ? 'Активно' : 'Неактивно'}
-                </Badge>
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  <Badge 
+                    variant={accommodation.is_active ? 'default' : 'secondary'}
+                  >
+                    {accommodation.is_active ? 'Активно' : 'Неактивно'}
+                  </Badge>
+                  {accommodation.category && (
+                    <Badge 
+                      variant={accommodation.category === 'VIP' ? 'default' : 'outline'}
+                      className={accommodation.category === 'VIP' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                    >
+                      {accommodation.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
               
               <CardHeader className="pb-2">
@@ -350,6 +372,18 @@ export function AdminAccommodations() {
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">за ночь</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Всего домиков:</span>
+                    <span className="font-medium">{accommodation.total_quantity}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Доступно:</span>
+                    <span className={`font-medium ${accommodation.available_quantity === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {accommodation.available_quantity}
+                    </span>
                   </div>
 
                   {accommodation.features && accommodation.features.length > 0 && (
@@ -444,15 +478,51 @@ export function AdminAccommodations() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="price">Цена за ночь (₸)</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="price">Цена за ночь (₸)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="category">Категория</Label>
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите категорию" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Без категории</SelectItem>
+                    <SelectItem value="VIP">VIP</SelectItem>
+                    <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="total_quantity">Количество домиков</Label>
+                <Input
+                  id="total_quantity"
+                  type="number"
+                  min="1"
+                  value={formData.total_quantity}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      total_quantity: value,
+                      available_quantity: Math.min(prev.available_quantity, value)
+                    }));
+                  }}
+                  required
+                />
+              </div>
             </div>
 
             <div>

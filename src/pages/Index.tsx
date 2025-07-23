@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath } from 'lucide-react';
+import { Calendar, MapPin, Wifi, Car, Utensils, Shield, Mountain, Trees, Waves, Users, Coffee, Home, Star, Clock, Globe, Phone, Crown, Camera, Fish, Target, TreePine, Bath, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -24,6 +25,9 @@ interface AccommodationType {
   features: string[];
   is_active: boolean;
   images?: string[];
+  category?: string;
+  total_quantity: number;
+  available_quantity: number;
 }
 
 const translations = {
@@ -403,11 +407,31 @@ const Index = () => {
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     )}
-                    <div className="absolute top-4 right-4">
-                      <div className="bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                        <Star className="w-4 h-4" />
-                        Популярный
-                      </div>
+                    <div className="absolute top-4 right-4 flex flex-col gap-2">
+                      {accommodation.category && (
+                        <Badge 
+                          variant={accommodation.category === 'VIP' ? 'default' : 'outline'}
+                          className={accommodation.category === 'VIP' 
+                            ? 'bg-yellow-500 hover:bg-yellow-600 text-black' 
+                            : 'bg-gray-600 hover:bg-gray-700 text-white'
+                          }
+                        >
+                          <Crown className="w-3 h-3 mr-1" />
+                          {accommodation.category}
+                        </Badge>
+                      )}
+                      <Badge 
+                        variant={accommodation.available_quantity > 0 ? 'default' : 'destructive'}
+                        className={accommodation.available_quantity > 0 
+                          ? 'bg-green-600 hover:bg-green-700' 
+                          : 'bg-red-600 hover:bg-red-700'
+                        }
+                      >
+                        {accommodation.available_quantity > 0 
+                          ? `Свободно: ${accommodation.available_quantity}` 
+                          : 'ЗАНЯТ'
+                        }
+                      </Badge>
                     </div>
                     <div className="absolute top-4 left-4">
                       <div className="bg-card/90 backdrop-blur-sm p-2 rounded-full">
@@ -451,10 +475,22 @@ const Index = () => {
                     </div>
                     
                     <Button 
-                      className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 shadow-md hover:shadow-lg transition-all duration-300"
-                      onClick={() => openBookingDialog(accommodation.name_ru)}
+                      className={`w-full shadow-md hover:shadow-lg transition-all duration-300 ${
+                        accommodation.available_quantity === 0 
+                          ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-50' 
+                          : 'bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90'
+                      }`}
+                      onClick={() => accommodation.available_quantity > 0 && openBookingDialog(accommodation.name_ru)}
+                      disabled={accommodation.available_quantity === 0}
                     >
-                      {t.rooms.book} {language === 'kz' ? accommodation.name_kz : language === 'en' ? accommodation.name_en : accommodation.name_ru}
+                      {accommodation.available_quantity === 0 ? (
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          ЗАНЯТ
+                        </div>
+                      ) : (
+                        `${t.rooms.book} ${language === 'kz' ? accommodation.name_kz : language === 'en' ? accommodation.name_en : accommodation.name_ru}`
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

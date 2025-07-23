@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       accommodation_types: {
         Row: {
+          available_quantity: number | null
+          category: string | null
           created_at: string
           description_en: string | null
           description_kz: string | null
@@ -29,9 +31,12 @@ export type Database = {
           name_kz: string
           name_ru: string
           price: number
+          total_quantity: number | null
           updated_at: string
         }
         Insert: {
+          available_quantity?: number | null
+          category?: string | null
           created_at?: string
           description_en?: string | null
           description_kz?: string | null
@@ -45,9 +50,12 @@ export type Database = {
           name_kz: string
           name_ru: string
           price: number
+          total_quantity?: number | null
           updated_at?: string
         }
         Update: {
+          available_quantity?: number | null
+          category?: string | null
           created_at?: string
           description_en?: string | null
           description_kz?: string | null
@@ -61,6 +69,7 @@ export type Database = {
           name_kz?: string
           name_ru?: string
           price?: number
+          total_quantity?: number | null
           updated_at?: string
         }
         Relationships: []
