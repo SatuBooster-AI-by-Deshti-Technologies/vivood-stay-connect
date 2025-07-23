@@ -16,8 +16,8 @@ export function QuickActions() {
       urgent: true
     },
     {
-      title: 'Добавить клиента',
-      description: 'Добавить нового клиента в базу',
+      title: 'Добавить клиент',
+      description: '',
       icon: Users,
       action: () => navigate('/admin/clients/new'),
       color: 'bg-green-500',
