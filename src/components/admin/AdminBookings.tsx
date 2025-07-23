@@ -47,22 +47,14 @@ export function AdminBookings() {
 
   const loadBookings = async () => {
     try {
-      const { data, error } = await supabase
+      // Сначала получаем все бронирования
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          payment_links!payment_links_booking_id_fkey (
-            status,
-            payment_screenshot
-          ),
-          whatsapp_sessions!whatsapp_sessions_phone_number_fkey (
-            session_stage
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error loading bookings:', error);
+      if (bookingsError) {
+        console.error('Error loading bookings:', bookingsError);
         toast({
           title: "Ошибка",
           description: "Не удалось загрузить бронирования",
@@ -71,17 +63,37 @@ export function AdminBookings() {
         return;
       }
 
-      // Преобразуем данные для удобного использования
-      const formattedBookings = (data || []).map(booking => ({
-        ...booking,
-        payment_status: booking.payment_links?.[0]?.status,
-        payment_screenshot: booking.payment_links?.[0]?.payment_screenshot,
-        session_stage: booking.whatsapp_sessions?.[0]?.session_stage
-      }));
+      // Получаем информацию об оплатах
+      const { data: paymentLinksData } = await supabase
+        .from('payment_links')
+        .select('booking_id, status, payment_screenshot');
+
+      // Получаем информацию о WhatsApp сессиях
+      const { data: whatsappSessionsData } = await supabase
+        .from('whatsapp_sessions')
+        .select('phone_number, session_stage');
+
+      // Объединяем данные
+      const formattedBookings = (bookingsData || []).map(booking => {
+        const paymentLink = paymentLinksData?.find(pl => pl.booking_id === booking.id);
+        const whatsappSession = whatsappSessionsData?.find(ws => ws.phone_number === booking.phone);
+        
+        return {
+          ...booking,
+          payment_status: paymentLink?.status,
+          payment_screenshot: paymentLink?.payment_screenshot,
+          session_stage: whatsappSession?.session_stage
+        };
+      });
 
       setBookings(formattedBookings);
     } catch (error) {
       console.error('Error loading bookings:', error);
+      toast({
+        title: "Ошибка", 
+        description: "Произошла ошибка при загрузке данных",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
