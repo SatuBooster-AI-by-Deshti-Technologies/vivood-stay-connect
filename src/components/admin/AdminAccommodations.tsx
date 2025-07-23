@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Home, DollarSign, Tag, Images } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, Tag, Images } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ImageUploader } from './ImageUploader';
@@ -289,7 +289,7 @@ export function AdminAccommodations() {
                     : 0} ₸
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-yellow-500" />
+              <div className="text-yellow-600">₸</div>
             </div>
           </CardContent>
         </Card>
@@ -366,7 +366,7 @@ export function AdminAccommodations() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="text-green-600 text-lg font-bold">₸</span>
                       <span className="text-xl font-bold text-green-600">
                         {accommodation.price.toLocaleString()} ₸
                       </span>

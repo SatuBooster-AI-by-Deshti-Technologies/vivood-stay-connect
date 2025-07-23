@@ -442,8 +442,6 @@ export const WhatsAppManager = () => {
                                       <p className="font-medium">{selectedSession.client_name || 'Не указано'}</p>
                                     </div>
                                     <div>
-                                      <Label>Email</Label>
-                                      <p className="font-medium">{selectedSession.email || 'Не указано'}</p>
                                     </div>
                                     <div>
                                       <Label>Дата заезда</Label>

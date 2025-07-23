@@ -31,7 +31,7 @@ export function NewClient() {
         .from('clients')
         .insert([{
           ...formData,
-          email: `client_${Date.now()}@temp.local` // Auto-generate placeholder email
+          email: `client_${Date.now()}@vivoodtau.com` // Системный email
         }]);
 
       if (error) {

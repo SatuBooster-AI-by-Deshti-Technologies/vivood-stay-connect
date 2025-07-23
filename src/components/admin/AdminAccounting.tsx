@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calculator, TrendingUp, TrendingDown, DollarSign, FileText, Trash2, Edit } from 'lucide-react';
+import { Plus, Calculator, TrendingUp, TrendingDown, FileText, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 
@@ -367,7 +367,7 @@ export function AdminAccounting() {
             Отчет о прибылях
           </TabsTrigger>
           <TabsTrigger value="accounts">
-            <DollarSign className="w-4 h-4 mr-2" />
+            <span className="text-primary">₸</span>
             План счетов
           </TabsTrigger>
         </TabsList>
@@ -511,7 +511,7 @@ export function AdminAccounting() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Чистая прибыль</CardTitle>
-                    <DollarSign className="h-4 w-4" />
+                    <span className="text-primary">₸</span>
                   </CardHeader>
                   <CardContent>
                     <div className={`text-2xl font-bold ${profitLoss.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>

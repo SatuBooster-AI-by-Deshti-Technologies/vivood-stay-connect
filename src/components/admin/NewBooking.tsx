@@ -81,7 +81,7 @@ export function NewBooking() {
         .from('bookings')
         .insert([{
           name: formData.name,
-          email: `admin_${Date.now()}@vivoodtau.com`, // Автогенерация email для админа
+          email: `admin_${Date.now()}@vivoodtau.com`, // Системный email для админа
           phone: formData.phone,
           accommodation_type: formData.accommodation_type,
           check_in: formData.check_in,

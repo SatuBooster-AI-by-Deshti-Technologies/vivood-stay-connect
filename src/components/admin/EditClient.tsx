@@ -13,7 +13,6 @@ import { ArrowLeft, Save } from 'lucide-react';
 interface Client {
   id: string;
   name: string;
-  email: string;
   phone: string;
   source: string;
   notes?: string;
@@ -28,7 +27,6 @@ export function EditClient() {
   const [client, setClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
     source: '',
     notes: ''
@@ -72,7 +70,6 @@ export function EditClient() {
       setClient(data);
       setFormData({
         name: data.name || '',
-        email: data.email || '',
         phone: data.phone || '',
         source: data.source || '',
         notes: data.notes || ''
@@ -188,16 +185,6 @@ export function EditClient() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="client@example.com"
-              />
-            </div>
 
             <div>
               <Label htmlFor="source">Источник</Label>

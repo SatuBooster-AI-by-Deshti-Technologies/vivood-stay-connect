@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Filter, Users, Calendar, Phone, Mail, MessageCircle, CreditCard, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Users, Calendar, Phone, MessageCircle, CreditCard, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -14,7 +14,7 @@ import { ru } from 'date-fns/locale';
 interface Booking {
   id: string;
   name: string;
-  email: string;
+  // email field removed
   phone: string;
   accommodation_type: string;
   check_in: string;
@@ -105,7 +105,6 @@ export function AdminBookings() {
     if (searchTerm) {
       filtered = filtered.filter(booking => 
         booking.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.phone.includes(searchTerm) ||
         booking.accommodation_type.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -315,10 +314,6 @@ export function AdminBookings() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-4 w-4" />
-                        {booking.email}
-                      </div>
                       <div className="flex items-center gap-1">
                         <Phone className="h-4 w-4" />
                         {booking.phone}

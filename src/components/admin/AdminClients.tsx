@@ -4,14 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Users, Mail, Phone, Calendar, Plus, Edit, Trash2 } from 'lucide-react';
+import { Users, Phone, Calendar, Plus, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface Client {
   id?: string;
-  email: string;
   name: string;
   phone: string;
   totalBookings: number;
@@ -47,7 +46,7 @@ export function AdminClients() {
       // Загружаем клиентов из бронирований для совместимости
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('name, email, phone, created_at')
+        .select('name, phone, created_at')
         .order('created_at', { ascending: false });
 
       if (bookingsError) {
@@ -58,14 +57,13 @@ export function AdminClients() {
       // Объединяем клиентов
       const allClientsData = [...(clientsData || [])];
       
-      // Группируем по email для получения уникальных клиентов из бронирований
+      // Группируем по телефону для получения уникальных клиентов из бронирований
       const clientsMap = new Map<string, Client>();
       
       // Добавляем клиентов из таблицы clients
       allClientsData.forEach(client => {
-        clientsMap.set(client.email, {
+        clientsMap.set(client.phone, {
           id: client.id,
-          email: client.email,
           name: client.name,
           phone: client.phone,
           totalBookings: 0,
@@ -77,15 +75,14 @@ export function AdminClients() {
 
       // Добавляем клиентов из бронирований и считаем количество бронирований
       bookings?.forEach(booking => {
-        const existing = clientsMap.get(booking.email);
+        const existing = clientsMap.get(booking.phone);
         if (existing) {
           existing.totalBookings += 1;
           if (new Date(booking.created_at) > new Date(existing.lastBooking)) {
             existing.lastBooking = booking.created_at;
           }
-        } else if (!clientsData?.find(c => c.email === booking.email)) {
-          clientsMap.set(booking.email, {
-            email: booking.email,
+        } else if (!clientsData?.find(c => c.phone === booking.phone)) {
+          clientsMap.set(booking.phone, {
             name: booking.name,
             phone: booking.phone,
             totalBookings: 1,
@@ -112,7 +109,6 @@ export function AdminClients() {
     } else {
       const filtered = allClients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.phone.includes(searchTerm)
       );
       setClients(filtered);
@@ -192,7 +188,7 @@ export function AdminClients() {
         <CardContent className="p-4">
           <div className="relative">
             <Input
-              placeholder="Поиск по имени, email или телефону..."
+              placeholder="Поиск по имени или телефону..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -264,7 +260,7 @@ export function AdminClients() {
           </Card>
         ) : (
           clients.map((client, index) => (
-            <Card key={`${client.email}-${index}`}>
+            <Card key={`${client.phone}-${index}`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -281,10 +277,6 @@ export function AdminClients() {
                         )}
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          <span>{client.email}</span>
-                        </div>
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4" />
                           <span>{client.phone}</span>
