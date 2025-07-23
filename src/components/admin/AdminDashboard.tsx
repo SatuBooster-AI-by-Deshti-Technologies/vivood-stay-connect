@@ -6,13 +6,15 @@ import { NotificationSystem } from './NotificationSystem';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, Home, TrendingUp, CheckSquare, Activity, Clock } from 'lucide-react';
+import { Calendar, Users, Home, TrendingUp, CheckSquare, Activity, Clock, AlertCircle, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
   const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [whatsappSessions, setWhatsappSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTaskManager, setShowTaskManager] = useState(false);
 
@@ -22,16 +24,36 @@ export function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [activitiesData, tasksData] = await Promise.all([
+      const [activitiesData, tasksData, whatsappData] = await Promise.all([
         api.getActivities(),
-        api.getTasks()
+        api.getTasks(),
+        loadWhatsAppSessions()
       ]);
       setActivities(activitiesData);
       setTasks(tasksData);
+      setWhatsappSessions(whatsappData);
     } catch (error) {
       console.error('Ошибка загрузки данных дашборда:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadWhatsAppSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_sessions')
+        .select(`
+          *,
+          payment_links!inner(id, status, amount, payment_screenshot)
+        `)
+        .in('session_stage', ['booking_confirmed', 'payment_pending', 'payment_verification'])
+        .order('last_interaction', { ascending: false });
+      
+      return data || [];
+    } catch (error) {
+      console.error('Ошибка загрузки WhatsApp сессий:', error);
+      return [];
     }
   };
 
@@ -155,6 +177,57 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* WhatsApp бронирования ожидающие подтверждения */}
+      {whatsappSessions.length > 0 && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-red-700">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              Ожидают подтверждения оплаты ({whatsappSessions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {whatsappSessions.map((session) => (
+                <div key={session.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{session.client_name || session.phone_number}</p>
+                      <p className="text-xs text-gray-500">
+                        {session.accommodation_type} • {session.guests} гостей
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {session.check_in_date} - {session.check_out_date}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge 
+                      variant={
+                        session.session_stage === 'payment_verification' ? 'destructive' : 
+                        session.session_stage === 'payment_pending' ? 'secondary' : 'outline'
+                      }
+                    >
+                      {session.session_stage === 'payment_verification' ? 'Проверить чек' :
+                       session.session_stage === 'payment_pending' ? 'Ждет оплату' : 'Подтвердить'}
+                    </Badge>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {session.payment_links?.[0]?.amount} ₸
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="w-full">
+                Перейти к WhatsApp управлению
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Последние активности */}
       <Card>

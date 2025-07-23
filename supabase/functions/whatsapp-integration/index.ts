@@ -27,14 +27,14 @@ serve(async (req) => {
         return await saveMessage(data);
       case 'get_session':
         return await getSession(data.phone_number);
-      case 'update_session_stage':
-        return await updateSessionStage(data);
-      case 'create_booking':
-        return await createBookingFromWhatsApp(data);
-      case 'generate_payment_link':
-        return await generatePaymentLink(data);
-      case 'verify_payment':
-        return await verifyPayment(data);
+      case 'check_booking_match':
+        return await checkBookingMatch(data);
+      case 'send_payment_request':
+        return await sendPaymentRequest(data);
+      case 'upload_payment_receipt':
+        return await uploadPaymentReceipt(data);
+      case 'confirm_payment':
+        return await confirmPayment(data);
       case 'send_marketing_message':
         return await sendMarketingMessage(data);
       default:
@@ -52,17 +52,11 @@ serve(async (req) => {
   }
 });
 
-// Сохранить или обновить WhatsApp сессию
+// Сохранить или обновить WhatsApp сессию (только для консультаций)
 async function saveWhatsAppSession(data: any) {
   const { 
     phone_number, 
-    client_name = null, 
-    email = null, 
-    check_in_date = null, 
-    check_out_date = null,
-    guests = null,
-    accommodation_type = null,
-    session_stage = 'initial',
+    session_stage = 'consultation',
     notes = null
   } = data;
 
@@ -80,12 +74,6 @@ async function saveWhatsAppSession(data: any) {
     sessionResult = await supabase
       .from('whatsapp_sessions')
       .update({
-        client_name: client_name || existingSession.client_name,
-        email: email || existingSession.email,
-        check_in_date: check_in_date || existingSession.check_in_date,
-        check_out_date: check_out_date || existingSession.check_out_date,
-        guests: guests || existingSession.guests,
-        accommodation_type: accommodation_type || existingSession.accommodation_type,
         session_stage,
         last_interaction: new Date().toISOString(),
         notes: notes || existingSession.notes
@@ -99,12 +87,6 @@ async function saveWhatsAppSession(data: any) {
       .from('whatsapp_sessions')
       .insert({
         phone_number,
-        client_name,
-        email,
-        check_in_date,
-        check_out_date,
-        guests,
-        accommodation_type,
         session_stage,
         notes
       })
@@ -157,141 +139,170 @@ async function getSession(phone_number: string) {
   });
 }
 
-// Обновить стадию сессии
-async function updateSessionStage(data: any) {
-  const { phone_number, session_stage, additional_data = {} } = data;
+// Проверить совпадение бронирования с WhatsApp
+async function checkBookingMatch(data: any) {
+  const { booking_id } = data;
 
-  const updateData: any = {
-    session_stage,
-    last_interaction: new Date().toISOString(),
-    ...additional_data
-  };
-
-  const { data: session, error } = await supabase
-    .from('whatsapp_sessions')
-    .update(updateData)
-    .eq('phone_number', phone_number)
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  return new Response(JSON.stringify({ success: true, session }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-
-// Создать бронирование из WhatsApp
-async function createBookingFromWhatsApp(data: any) {
-  const { session_id } = data;
-
-  // Получаем данные сессии
-  const { data: session, error: sessionError } = await supabase
-    .from('whatsapp_sessions')
-    .select('*')
-    .eq('id', session_id)
-    .single();
-
-  if (sessionError) throw sessionError;
-
-  if (!session.client_name || !session.check_in_date || !session.check_out_date || !session.accommodation_type) {
-    throw new Error('Недостаточно данных для создания бронирования');
-  }
-
-  // Создаем клиента если не существует
-  let clientId = session.client_id;
-  
-  if (!clientId) {
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .insert({
-        name: session.client_name,
-        phone: session.phone_number,
-        email: session.email || `${session.phone_number}@whatsapp.user`,
-        source: 'whatsapp'
-      })
-      .select()
-      .single();
-
-    if (clientError) throw clientError;
-    clientId = client.id;
-
-    // Обновляем сессию с client_id
-    await supabase
-      .from('whatsapp_sessions')
-      .update({ client_id: clientId })
-      .eq('id', session.id);
-  }
-
-  // Создаем бронирование
+  // Получаем бронирование
   const { data: booking, error: bookingError } = await supabase
     .from('bookings')
-    .insert({
-      name: session.client_name,
-      email: session.email || `${session.phone_number}@whatsapp.user`,
-      phone: session.phone_number,
-      accommodation_type: session.accommodation_type,
-      check_in: session.check_in_date,
-      check_out: session.check_out_date,
-      guests: session.guests || 1,
-      total_price: session.total_price || 0,
-      status: 'pending'
-    })
-    .select()
+    .select('*')
+    .eq('id', booking_id)
     .single();
 
   if (bookingError) throw bookingError;
 
-  // Обновляем сессию
-  await supabase
+  // Ищем WhatsApp сессию с таким же номером телефона
+  const { data: session } = await supabase
     .from('whatsapp_sessions')
-    .update({ 
-      booking_id: booking.id,
-      session_stage: 'booking_pending'
-    })
-    .eq('id', session.id);
+    .select('*')
+    .eq('phone_number', booking.phone)
+    .single();
 
-  return new Response(JSON.stringify({ success: true, booking }), {
+  if (session) {
+    // Обновляем сессию - связываем с бронированием
+    await supabase
+      .from('whatsapp_sessions')
+      .update({ 
+        booking_id: booking.id,
+        client_name: booking.name,
+        email: booking.email,
+        check_in_date: booking.check_in,
+        check_out_date: booking.check_out,
+        guests: booking.guests,
+        accommodation_type: booking.accommodation_type,
+        total_price: booking.total_price,
+        session_stage: 'booking_confirmed'
+      })
+      .eq('id', session.id);
+
+    // Отправляем сообщение клиенту
+    const message = `🎉 Ваша заявка на бронирование получена!\n\n` +
+      `📋 Детали:\n` +
+      `• ${booking.accommodation_type}\n` +
+      `• ${booking.check_in} - ${booking.check_out}\n` +
+      `• ${booking.guests} гостей\n` +
+      `• Сумма: ${booking.total_price} ₸\n\n` +
+      `💰 Для подтверждения брони необходима предоплата 50% (${Math.round(booking.total_price * 0.5)} ₸)\n\n` +
+      `Ссылка для оплаты будет отправлена в следующем сообщении.`;
+
+    await fetch(`http://194.32.141.216:3003/send?to=${booking.phone}&text=${encodeURIComponent(message)}`);
+
+    return new Response(JSON.stringify({ success: true, session_found: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  return new Response(JSON.stringify({ success: true, session_found: false }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-// Генерировать ссылку на оплату
-async function generatePaymentLink(data: any) {
-  const { booking_id, session_id, amount } = data;
+// Отправить запрос на оплату
+async function sendPaymentRequest(data: any) {
+  const { booking_id } = data;
 
-  // Здесь можно интегрировать с платежной системой
-  // Для примера создаем простую ссылку
-  const paymentUrl = `https://pay.kaspi.kz/pay/${booking_id}?amount=${amount}`;
+  // Получаем бронирование
+  const { data: booking, error: bookingError } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', booking_id)
+    .single();
+
+  if (bookingError) throw bookingError;
+
+  // Получаем сессию
+  const { data: session } = await supabase
+    .from('whatsapp_sessions')
+    .select('*')
+    .eq('booking_id', booking_id)
+    .single();
+
+  if (!session) throw new Error('Session not found');
+
+  // Создаем ссылку на оплату
+  const prepaymentAmount = Math.round(booking.total_price * 0.5);
+  const paymentUrl = `https://pay.kaspi.kz/pay/vivoodtau?amount=${prepaymentAmount}&ref=${booking_id}`;
 
   const { data: paymentLink, error } = await supabase
     .from('payment_links')
     .insert({
-      booking_id,
-      session_id,
+      booking_id: booking.id,
+      session_id: session.id,
       payment_url: paymentUrl,
-      amount,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 часа
+      amount: prepaymentAmount,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     })
     .select()
     .single();
 
   if (error) throw error;
+
+  // Отправляем ссылку на оплату
+  const message = `💳 Ссылка для предоплаты (${prepaymentAmount} ₸):\n\n${paymentUrl}\n\n` +
+    `После оплаты пришлите скриншот чека в этот чат для подтверждения.`;
+
+  await fetch(`http://194.32.141.216:3003/send?to=${booking.phone}&text=${encodeURIComponent(message)}`);
+
+  // Обновляем стадию сессии
+  await supabase
+    .from('whatsapp_sessions')
+    .update({ session_stage: 'payment_pending' })
+    .eq('id', session.id);
 
   return new Response(JSON.stringify({ success: true, payment_link: paymentLink }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-// Проверить оплату
-async function verifyPayment(data: any) {
-  const { payment_link_id, payment_screenshot } = data;
+// Загрузить чек оплаты
+async function uploadPaymentReceipt(data: any) {
+  const { session_id, receipt_url } = data;
 
+  // Получаем сессию
+  const { data: session } = await supabase
+    .from('whatsapp_sessions')
+    .select('*')
+    .eq('id', session_id)
+    .single();
+
+  if (!session) throw new Error('Session not found');
+
+  // Обновляем ссылку на оплату с чеком
+  await supabase
+    .from('payment_links')
+    .update({
+      payment_screenshot: receipt_url,
+      status: 'receipt_uploaded'
+    })
+    .eq('session_id', session_id);
+
+  // Обновляем стадию сессии
+  await supabase
+    .from('whatsapp_sessions')
+    .update({ session_stage: 'payment_verification' })
+    .eq('id', session_id);
+
+  // Отправляем подтверждение
+  const message = `✅ Чек получен! Ваша оплата проверяется администратором. Мы свяжемся с вами в ближайшее время.`;
+  await fetch(`http://194.32.141.216:3003/send?to=${session.phone_number}&text=${encodeURIComponent(message)}`);
+
+  return new Response(JSON.stringify({ success: true }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// Подтвердить оплату
+async function confirmPayment(data: any) {
+  const { payment_link_id, verified_by } = data;
+
+  // Обновляем статус оплаты
   const { data: paymentLink, error } = await supabase
     .from('payment_links')
     .update({
-      payment_screenshot,
-      status: 'paid' // В реальности здесь должна быть проверка
+      status: 'verified',
+      verified_at: new Date().toISOString(),
+      verified_by
     })
     .eq('id', payment_link_id)
     .select()
@@ -305,6 +316,30 @@ async function verifyPayment(data: any) {
       .from('bookings')
       .update({ status: 'confirmed' })
       .eq('id', paymentLink.booking_id);
+  }
+
+  // Обновляем стадию сессии
+  await supabase
+    .from('whatsapp_sessions')
+    .update({ session_stage: 'payment_confirmed' })
+    .eq('session_id', paymentLink.session_id);
+
+  // Получаем данные бронирования для отправки подтверждения
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('*')
+    .eq('id', paymentLink.booking_id)
+    .single();
+
+  if (booking) {
+    const message = `🎉 Отличные новости! Ваша оплата подтверждена!\n\n` +
+      `✅ Бронирование подтверждено:\n` +
+      `• ${booking.accommodation_type}\n` +
+      `• ${booking.check_in} - ${booking.check_out}\n` +
+      `• ${booking.guests} гостей\n\n` +
+      `Мы ждем вас! При заселении доплатите оставшуюся сумму: ${booking.total_price - paymentLink.amount} ₸`;
+
+    await fetch(`http://194.32.141.216:3003/send?to=${booking.phone}&text=${encodeURIComponent(message)}`);
   }
 
   return new Response(JSON.stringify({ success: true, verified: true }), {

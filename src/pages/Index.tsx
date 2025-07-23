@@ -250,7 +250,7 @@ const Index = () => {
       const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
       const totalPrice = pricePerNight * nights;
 
-      const { error } = await supabase
+      const { data: booking, error } = await supabase
         .from('bookings')
         .insert([{
           accommodation_type: formData.accommodationType,
@@ -262,7 +262,9 @@ const Index = () => {
           phone: formData.phone,
           status: 'pending',
           total_price: totalPrice
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) {
         console.error('Error creating booking:', error);
@@ -272,6 +274,20 @@ const Index = () => {
           variant: "destructive"
         });
         return;
+      }
+
+      // Проверяем совпадение с WhatsApp сессией
+      try {
+        await supabase.functions.invoke('whatsapp-integration', {
+          body: {
+            action: 'check_booking_match',
+            data: {
+              booking_id: booking.id
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error checking WhatsApp match:', error);
       }
 
       toast({

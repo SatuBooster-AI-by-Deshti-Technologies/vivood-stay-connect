@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { MessageCircle, Users, Send, Eye, Calendar, TrendingUp } from 'lucide-react';
+import { MessageCircle, Users, Send, Eye, Calendar, TrendingUp, CheckCircle, X } from 'lucide-react';
 
 export const WhatsAppManager = () => {
   const { toast } = useToast();
@@ -68,11 +68,10 @@ export const WhatsAppManager = () => {
 
   const getStageLabel = (stage: string) => {
     const stages = {
-      'initial': 'Начальный',
-      'collecting_info': 'Сбор информации',
-      'booking_pending': 'Ожидает бронирования',
-      'booking_confirmed': 'Бронирование подтверждено',
-      'payment_pending': 'Ожидает оплату',
+      'consultation': 'Консультация',
+      'booking_confirmed': 'Бронирование создано',
+      'payment_pending': 'Ждет оплату',
+      'payment_verification': 'Проверка чека',
       'payment_confirmed': 'Оплата подтверждена'
     };
     return stages[stage as keyof typeof stages] || stage;
@@ -80,11 +79,10 @@ export const WhatsAppManager = () => {
 
   const getStageColor = (stage: string) => {
     const colors = {
-      'initial': 'bg-gray-100 text-gray-800',
-      'collecting_info': 'bg-blue-100 text-blue-800',
-      'booking_pending': 'bg-yellow-100 text-yellow-800',
+      'consultation': 'bg-blue-100 text-blue-800',
       'booking_confirmed': 'bg-green-100 text-green-800',
-      'payment_pending': 'bg-orange-100 text-orange-800',
+      'payment_pending': 'bg-yellow-100 text-yellow-800',
+      'payment_verification': 'bg-orange-100 text-orange-800',
       'payment_confirmed': 'bg-emerald-100 text-emerald-800'
     };
     return colors[stage as keyof typeof colors] || 'bg-gray-100 text-gray-800';
@@ -193,6 +191,128 @@ export const WhatsAppManager = () => {
     }
   };
 
+  // Компонент для проверки оплаты
+  const PaymentVerificationSection = ({ session, onPaymentConfirmed }: any) => {
+    const [paymentLinks, setPaymentLinks] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      loadPaymentLinks();
+    }, [session.id]);
+
+    const loadPaymentLinks = async () => {
+      const { data } = await supabase
+        .from('payment_links')
+        .select('*')
+        .eq('session_id', session.id)
+        .order('created_at', { ascending: false });
+      
+      setPaymentLinks(data || []);
+    };
+
+    const confirmPayment = async (paymentLinkId: string) => {
+      setLoading(true);
+      try {
+        const response = await supabase.functions.invoke('whatsapp-integration', {
+          body: {
+            action: 'confirm_payment',
+            data: {
+              payment_link_id: paymentLinkId,
+              verified_by: 'admin' // В реальности здесь должен быть ID администратора
+            }
+          }
+        });
+
+        if (response.data?.success) {
+          toast({
+            title: "Оплата подтверждена",
+            description: "Клиент получил уведомление",
+          });
+          onPaymentConfirmed();
+          loadPaymentLinks();
+        }
+      } catch (error) {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось подтвердить оплату",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
+    };
+
+    return (
+      <div className="space-y-4 p-4 border rounded-lg bg-yellow-50">
+        <h4 className="font-semibold text-yellow-800">Проверка оплаты</h4>
+        {paymentLinks.map((link) => (
+          <div key={link.id} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span>Сумма: {link.amount} ₸</span>
+              <Badge variant={link.status === 'verified' ? 'default' : 'secondary'}>
+                {link.status === 'verified' ? 'Подтверждено' : 'Ожидает проверки'}
+              </Badge>
+            </div>
+            {link.payment_screenshot && (
+              <div className="space-y-2">
+                <Label>Чек от клиента:</Label>
+                <img 
+                  src={link.payment_screenshot} 
+                  alt="Чек оплаты" 
+                  className="max-w-xs rounded-lg border"
+                />
+                {link.status !== 'verified' && (
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={() => confirmPayment(link.id)}
+                      disabled={loading}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Подтвердить оплату
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <X className="h-4 w-4 mr-2" />
+                      Отклонить
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const sendPaymentRequest = async (bookingId: string) => {
+    setLoading(true);
+    try {
+      const response = await supabase.functions.invoke('whatsapp-integration', {
+        body: {
+          action: 'send_payment_request',
+          data: {
+            booking_id: bookingId
+          }
+        }
+      });
+
+      if (response.data?.success) {
+        toast({
+          title: "Ссылка на оплату отправлена",
+          description: "Клиент получил ссылку для предоплаты",
+        });
+        loadSessions();
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить ссылку на оплату",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -277,18 +397,28 @@ export const WhatsAppManager = () => {
                   </TableHeader>
                   <TableBody>
                     {sessions.map((session) => (
-                      <TableRow key={session.id}>
+                    <TableRow key={session.id} className={session.session_stage === 'payment_verification' ? 'bg-yellow-50' : ''}>
                         <TableCell className="font-mono">{session.phone_number}</TableCell>
-                        <TableCell>{session.client_name || 'Не указано'}</TableCell>
+                        <TableCell>{session.client_name || 'Консультация'}</TableCell>
                         <TableCell>
                           <Badge className={getStageColor(session.session_stage)}>
                             {getStageLabel(session.session_stage)}
                           </Badge>
                         </TableCell>
-                        <TableCell>{session.accommodation_type || 'Не выбрано'}</TableCell>
-                        <TableCell>{session.check_in_date || 'Не указано'}</TableCell>
+                        <TableCell>{session.accommodation_type || '-'}</TableCell>
+                        <TableCell>{session.check_in_date || '-'}</TableCell>
                         <TableCell>{new Date(session.last_interaction).toLocaleString('ru-RU')}</TableCell>
-                        <TableCell>
+                        <TableCell className="space-x-2">
+                          {session.session_stage === 'booking_confirmed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => sendPaymentRequest(session.booking_id)}
+                              disabled={loading}
+                            >
+                              Запросить оплату
+                            </Button>
+                          )}
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
@@ -337,6 +467,13 @@ export const WhatsAppManager = () => {
                                     <Label>Заметки</Label>
                                     <p className="text-sm text-muted-foreground">{selectedSession.notes || 'Нет заметок'}</p>
                                   </div>
+
+                                  {selectedSession.session_stage === 'payment_verification' && (
+                                    <PaymentVerificationSection 
+                                      session={selectedSession} 
+                                      onPaymentConfirmed={loadSessions}
+                                    />
+                                  )}
 
                                   <div className="space-y-2">
                                     <Label>Отправить сообщение</Label>
