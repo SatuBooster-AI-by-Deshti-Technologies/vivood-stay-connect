@@ -1,6 +1,8 @@
 import { StatsOverview } from './StatsOverview';
 import { QuickActions } from './QuickActions';
 import { TaskBoard } from './TaskBoard';
+import { AccommodationAvailability } from './AccommodationAvailability';
+import { NotificationSystem } from './NotificationSystem';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,6 +71,7 @@ export function AdminDashboard() {
 
   return (
     <div className="p-3 md:p-6 space-y-6 md:space-y-8">
+      <NotificationSystem />
       {/* Заголовок */}
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -91,9 +94,11 @@ export function AdminDashboard() {
         <StatsOverview />
       </div>
 
-      {/* Быстрые действия и задачи */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      {/* Быстрые действия, задачи и остатки мест */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <QuickActions />
+        
+        <AccommodationAvailability />
         
         <Card>
           <CardHeader>

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Filter, Users, Calendar, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Filter, Users, Calendar, Phone, Mail, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Booking {
@@ -330,24 +330,47 @@ export function AdminBookings() {
                   </div>
                 )}
 
-                {booking.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={() => updateBookingStatus(booking.id, 'confirmed')}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Подтвердить
-                    </Button>
-                    <Button 
-                      onClick={() => updateBookingStatus(booking.id, 'cancelled')}
-                      variant="destructive" 
-                      size="sm"
-                    >
-                      Отменить
-                    </Button>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {/* Кнопки связи */}
+                  <Button 
+                    onClick={() => window.open(`tel:${booking.phone}`)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                  >
+                    <Phone className="w-3 h-3 mr-1" />
+                    Позвонить
+                  </Button>
+                  <Button 
+                    onClick={() => window.open(`https://wa.me/${booking.phone.replace(/\D/g, '')}`)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center bg-green-50 hover:bg-green-100 text-green-700"
+                  >
+                    <MessageCircle className="w-3 h-3 mr-1" />
+                    WhatsApp
+                  </Button>
+
+                  {/* Кнопки статуса (только для pending) */}
+                  {booking.status === 'pending' && (
+                    <>
+                      <Button 
+                        onClick={() => updateBookingStatus(booking.id, 'confirmed')}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Подтвердить
+                      </Button>
+                      <Button 
+                        onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                        variant="destructive" 
+                        size="sm"
+                      >
+                        Отменить
+                      </Button>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))
