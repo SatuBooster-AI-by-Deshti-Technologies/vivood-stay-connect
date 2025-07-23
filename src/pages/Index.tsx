@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 
 type Language = 'kz' | 'ru' | 'en';
 
@@ -152,8 +154,7 @@ const Index = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    checkIn: '',
-    checkOut: '',
+    dateRange: undefined as DateRange | undefined,
     guests: 2,
     accommodationType: ''
   });
@@ -211,12 +212,26 @@ const Index = () => {
     e.preventDefault();
     setIsLoading(true);
     
+    // Проверяем, что выбран диапазон дат
+    if (!formData.dateRange?.from || !formData.dateRange?.to) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, выберите даты заезда и выезда",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    const checkIn = formData.dateRange.from.toISOString().split('T')[0];
+    const checkOut = formData.dateRange.to.toISOString().split('T')[0];
+    
     try {
       // Проверяем доступность
       const isAvailable = await checkAvailability(
         formData.accommodationType,
-        formData.checkIn,
-        formData.checkOut
+        checkIn,
+        checkOut
       );
 
       if (!isAvailable) {
@@ -232,15 +247,15 @@ const Index = () => {
       // Находим цену размещения
       const accommodation = accommodationTypes.find(a => a.name_ru === formData.accommodationType);
       const pricePerNight = accommodation?.price || 0;
-      const nights = Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+      const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
       const totalPrice = pricePerNight * nights;
 
       const { error } = await supabase
         .from('bookings')
         .insert([{
           accommodation_type: formData.accommodationType,
-          check_in: formData.checkIn,
-          check_out: formData.checkOut,
+          check_in: checkIn,
+          check_out: checkOut,
           guests: formData.guests,
           name: formData.name,
           email: `guest_${Date.now()}@vivoodtau.com`,
@@ -267,8 +282,7 @@ const Index = () => {
       setFormData({
         name: '',
         phone: '',
-        checkIn: '',
-        checkOut: '',
+        dateRange: undefined,
         guests: 2,
         accommodationType: ''
       });
@@ -599,29 +613,14 @@ const Index = () => {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="checkIn">{t.booking.checkIn}</Label>
-                <Input
-                  id="checkIn"
-                  type="date"
-                  value={formData.checkIn}
-                  onChange={(e) => setFormData(prev => ({ ...prev, checkIn: e.target.value }))}
-                  required
-                  className="h-12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkOut">{t.booking.checkOut}</Label>
-                <Input
-                  id="checkOut"
-                  type="date"
-                  value={formData.checkOut}
-                  onChange={(e) => setFormData(prev => ({ ...prev, checkOut: e.target.value }))}
-                  required
-                  className="h-12"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateRange">Даты заезда и выезда</Label>
+              <DateRangePicker
+                dateRange={formData.dateRange}
+                onDateRangeChange={(range) => setFormData(prev => ({ ...prev, dateRange: range }))}
+                accommodationType={formData.accommodationType}
+                className="w-full"
+              />
             </div>
             
             <div className="space-y-2">
