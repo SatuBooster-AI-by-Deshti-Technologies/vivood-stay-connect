@@ -39,6 +39,20 @@ export function DateRangePicker({
   const loadBookedDates = async (accommodationName: string) => {
     setLoading(true)
     try {
+      // Получаем информацию о типе размещения для определения общего количества
+      const { data: accommodationData, error: accommodationError } = await supabase
+        .from('accommodation_types')
+        .select('total_quantity')
+        .eq('name_ru', accommodationName)
+        .single()
+
+      if (accommodationError) {
+        console.error('Error loading accommodation info:', accommodationError)
+        return
+      }
+
+      const totalQuantity = accommodationData?.total_quantity || 1
+
       // Получаем все подтвержденные бронирования для данного типа размещения
       const { data, error } = await supabase
         .from('bookings')
@@ -51,19 +65,29 @@ export function DateRangePicker({
         return
       }
 
-      // Создаем массив всех занятых дат
-      const dates: Date[] = []
+      // Подсчитываем количество бронирований для каждой даты
+      const dateBookingCount: { [key: string]: number } = {}
+      
       data?.forEach(booking => {
         const checkIn = new Date(booking.check_in)
         const checkOut = new Date(booking.check_out)
         
-        // Добавляем все даты между check_in и check_out (включительно)
+        // Добавляем все даты между check_in и check_out (не включая check_out)
         for (let d = new Date(checkIn); d < checkOut; d.setDate(d.getDate() + 1)) {
-          dates.push(new Date(d))
+          const dateKey = d.toISOString().split('T')[0]
+          dateBookingCount[dateKey] = (dateBookingCount[dateKey] || 0) + 1
+        }
+      })
+
+      // Создаем массив полностью занятых дат (когда количество бронирований >= общего количества)
+      const fullyBookedDates: Date[] = []
+      Object.entries(dateBookingCount).forEach(([dateKey, count]) => {
+        if (count >= totalQuantity) {
+          fullyBookedDates.push(new Date(dateKey))
         }
       })
       
-      setBookedDates(dates)
+      setBookedDates(fullyBookedDates)
     } catch (error) {
       console.error('Error loading booked dates:', error)
     } finally {

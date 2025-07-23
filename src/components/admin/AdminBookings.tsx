@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Filter, Users, Calendar, Phone, Mail, MessageCircle } from 'lucide-react';
+import { Plus, Search, Filter, Users, Calendar, Phone, Mail, MessageCircle, CreditCard, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface Booking {
   id: string;
@@ -21,6 +23,9 @@ interface Booking {
   status: string;
   total_price: number;
   created_at: string;
+  payment_status?: string;
+  payment_screenshot?: string;
+  session_stage?: string;
 }
 
 export function AdminBookings() {
@@ -44,7 +49,16 @@ export function AdminBookings() {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select(`
+          *,
+          payment_links!payment_links_booking_id_fkey (
+            status,
+            payment_screenshot
+          ),
+          whatsapp_sessions!whatsapp_sessions_phone_number_fkey (
+            session_stage
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,7 +71,15 @@ export function AdminBookings() {
         return;
       }
 
-      setBookings(data || []);
+      // Преобразуем данные для удобного использования
+      const formattedBookings = (data || []).map(booking => ({
+        ...booking,
+        payment_status: booking.payment_links?.[0]?.status,
+        payment_screenshot: booking.payment_links?.[0]?.payment_screenshot,
+        session_stage: booking.whatsapp_sessions?.[0]?.session_stage
+      }));
+
+      setBookings(formattedBookings);
     } catch (error) {
       console.error('Error loading bookings:', error);
     } finally {
@@ -310,10 +332,16 @@ export function AdminBookings() {
                   <div>
                     <p className="text-sm text-gray-600">Заезд</p>
                     <p className="font-medium">{new Date(booking.check_in).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(booking.check_in), 'd MMMM yyyy', { locale: ru })}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Выезд</p>
                     <p className="font-medium">{new Date(booking.check_out).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">
+                      {format(new Date(booking.check_out), 'd MMMM yyyy', { locale: ru })}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Ночей</p>
@@ -321,14 +349,41 @@ export function AdminBookings() {
                   </div>
                 </div>
 
-                {booking.total_price > 0 && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600">Общая стоимость</p>
-                    <p className="text-lg font-semibold text-green-600">
-                      {booking.total_price.toLocaleString()} ₸
-                    </p>
-                  </div>
-                )}
+                <div className="flex justify-between items-start mb-4">
+                  {booking.total_price > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Общая стоимость</p>
+                      <p className="text-lg font-semibold text-green-600">
+                        {booking.total_price.toLocaleString()} ₸
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* WhatsApp статус оплаты */}
+                  {booking.session_stage && (
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">WhatsApp статус</p>
+                      <div className="flex items-center gap-2">
+                        {booking.payment_status === 'verified' ? (
+                          <Badge className="bg-green-100 text-green-800">
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            Оплачено
+                          </Badge>
+                        ) : booking.payment_status === 'receipt_uploaded' ? (
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            Ждет подтверждения
+                          </Badge>
+                        ) : booking.payment_status ? (
+                          <Badge className="bg-red-100 text-red-800">
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            Не оплачено
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-wrap gap-2">
                   {/* Кнопки связи */}
@@ -350,6 +405,19 @@ export function AdminBookings() {
                     <MessageCircle className="w-3 h-3 mr-1" />
                     WhatsApp
                   </Button>
+
+                  {/* Кнопка просмотра чека */}
+                  {booking.payment_screenshot && (
+                    <Button 
+                      onClick={() => window.open(booking.payment_screenshot, '_blank')}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Посмотреть чек
+                    </Button>
+                  )}
 
                   {/* Кнопки статуса (только для pending) */}
                   {booking.status === 'pending' && (
