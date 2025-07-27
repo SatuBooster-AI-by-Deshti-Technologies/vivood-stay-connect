@@ -255,7 +255,7 @@ const Index = () => {
           check_out: checkOut,
           guests: formData.guests,
           name: formData.name,
-          email: `guest_${Date.now()}@vivoodtau.com`, // Системный email
+          email: formData.phone, // Используем телефон вместо email
           phone: formData.phone,
           status: 'pending',
           total_price: totalPrice

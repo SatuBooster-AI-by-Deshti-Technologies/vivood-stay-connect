@@ -112,7 +112,13 @@ export function AppSidebar() {
                     <Button
                       variant="ghost"
                       className={`w-full justify-start ${getNavCls(isActive(item.url, item.exact))}`}
-                      onClick={() => navigate(item.url)}
+                      onClick={() => {
+                        if (item.url.startsWith('http')) {
+                          window.open(item.url, '_blank');
+                        } else {
+                          navigate(item.url);
+                        }
+                      }}
                     >
                       <item.icon className="mr-3 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
