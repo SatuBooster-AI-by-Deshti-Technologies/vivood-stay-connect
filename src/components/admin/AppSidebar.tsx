@@ -58,7 +58,7 @@ const menuItems = [
   },
   { 
     title: "WhatsApp", 
-    url: "/admin/whatsapp", 
+    url: "http://194.32.141.216:3003/", 
     icon: MessageCircle 
   },
 ];
