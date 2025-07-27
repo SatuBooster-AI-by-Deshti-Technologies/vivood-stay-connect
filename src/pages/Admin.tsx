@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 
 interface Profile {
   name: string;
-  role: string;
+  app_role: string;
 }
 
 export default function Admin() {
@@ -39,7 +39,7 @@ export default function Admin() {
       // Получаем профиль пользователя
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('name, role')
+        .select('name, app_role')
         .eq('user_id', session.user.id)
         .single();
 
@@ -53,10 +53,10 @@ export default function Admin() {
         return;
       }
 
-      if (profileData.role !== 'admin') {
+      if (!profileData.app_role || !['admin', 'manager'].includes(profileData.app_role)) {
         toast({
           title: "Доступ запрещен",
-          description: "У вас нет прав администратора",
+          description: "У вас нет прав администратора или менеджера",
           variant: "destructive"
         });
         navigate('/');

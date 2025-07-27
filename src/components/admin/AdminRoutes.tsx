@@ -10,6 +10,7 @@ import { EditClient } from "./EditClient";
 import { AdminAccounting } from "./AdminAccounting";
 import { AdminAudit } from "./AdminAudit";
 import { WhatsAppManager } from "./WhatsAppManager";
+import { UserProfile } from "./UserProfile";
 
 export function AdminRoutes() {
   return (
@@ -25,6 +26,7 @@ export function AdminRoutes() {
       <Route path="accounting" element={<AdminAccounting />} />
       <Route path="audit" element={<AdminAudit />} />
       <Route path="whatsapp" element={<WhatsAppManager />} />
+      <Route path="profiles" element={<UserProfile />} />
     </Routes>
   );
 }

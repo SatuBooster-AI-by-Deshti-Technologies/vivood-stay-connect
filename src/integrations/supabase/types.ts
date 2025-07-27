@@ -399,6 +399,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          app_role: Database["public"]["Enums"]["app_role"] | null
           created_at: string
           id: string
           name: string | null
@@ -407,6 +408,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
           id?: string
           name?: string | null
@@ -415,6 +417,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_role?: Database["public"]["Enums"]["app_role"] | null
           created_at?: string
           id?: string
           name?: string | null
@@ -601,13 +604,24 @@ export type Database = {
         }
         Returns: string
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_or_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -734,6 +748,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "user"],
+    },
   },
 } as const
