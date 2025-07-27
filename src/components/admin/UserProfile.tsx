@@ -166,28 +166,34 @@ export function UserProfile() {
     }
 
     try {
-      // Создаем нового пользователя через admin API
-      const { data, error } = await supabase.auth.admin.createUser({
+      // Создаем нового пользователя через обычную регистрацию
+      const { data, error } = await supabase.auth.signUp({
         email: newUserData.email,
         password: newUserData.password,
-        user_metadata: {
-          name: newUserData.name
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: newUserData.name,
+            app_role: newUserData.role
+          }
         }
       });
 
       if (error) throw error;
 
-      // Создаем профиль с нужной ролью
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            name: newUserData.name,
-            app_role: newUserData.role
-          });
+      // Профиль создастся автоматически через триггер handle_new_user
+      // Но обновим роль, если нужно
+      if (data.user && newUserData.role !== 'user') {
+        setTimeout(async () => {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ app_role: newUserData.role })
+            .eq('user_id', data.user.id);
 
-        if (profileError) throw profileError;
+          if (profileError) {
+            console.error('Error updating role:', profileError);
+          }
+        }, 1000); // Даём время триггеру создать профиль
       }
 
       toast({
