@@ -686,6 +686,7 @@ const Index = () => {
           </div>
           <div className="mt-8 pt-6 border-t border-border/30 text-xs text-muted-foreground flex justify-between items-center">
             <span>© 2025 SatuBooster. Все права защищены.</span>
+            <a href="https://vivood-tau.satubooster.kz/admin">админ панель</a>
           </div>
         </div>
       </footer>
