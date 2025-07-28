@@ -11,6 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Home, Tag, Images } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ImageUploader } from './ImageUploader';
 
 interface AccommodationType {
@@ -40,6 +43,7 @@ export function AdminAccommodations() {
   const [editingAccommodation, setEditingAccommodation] = useState<AccommodationType | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     name_ru: '',
@@ -480,168 +484,328 @@ export function AdminAccommodations() {
       </div>
 
       {/* Диалог создания/редактирования */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingAccommodation ? 'Редактировать размещение' : 'Новое размещение'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="name_ru">Название (RU)</Label>
-                <Input
-                  id="name_ru"
-                  value={formData.name_ru}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name_ru: e.target.value }))}
-                  required
-                />
+      {isMobile ? (
+        <Drawer open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader>
+              <DrawerTitle>
+                {editingAccommodation ? 'Редактировать размещение' : 'Новое размещение'}
+              </DrawerTitle>
+            </DrawerHeader>
+            <ScrollArea className="flex-1 px-4">
+              <form onSubmit={handleSubmit} className="space-y-4 pb-6">
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label htmlFor="name_ru">Название (RU)</Label>
+                    <Input
+                      id="name_ru"
+                      value={formData.name_ru}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_ru: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="name_en">Название (EN)</Label>
+                    <Input
+                      id="name_en"
+                      value={formData.name_en}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="name_kz">Название (KZ)</Label>
+                    <Input
+                      id="name_kz"
+                      value={formData.name_kz}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_kz: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description_ru">Описание (RU)</Label>
+                  <Textarea
+                    id="description_ru"
+                    value={formData.description_ru}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description_ru: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="weekday_price">Будние дни (₸)</Label>
+                    <Input
+                      id="weekday_price"
+                      type="number"
+                      value={formData.weekday_price}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          weekday_price: value,
+                          price: value
+                        }));
+                      }}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="weekend_price">Выходные (₸)</Label>
+                    <Input
+                      id="weekend_price"
+                      type="number"
+                      value={formData.weekend_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, weekend_price: Number(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="total_quantity">Количество домиков</Label>
+                  <Input
+                    id="total_quantity"
+                    type="number"
+                    min="1"
+                    value={formData.total_quantity}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        total_quantity: value,
+                        available_quantity: Math.min(prev.available_quantity, value)
+                      }));
+                    }}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Категория</Label>
+                  <Select 
+                    value={formData.category || "none"} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите категорию" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Без категории</SelectItem>
+                      <SelectItem value="VIP">VIP</SelectItem>
+                      <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="features">Удобства (через запятую)</Label>
+                  <Input
+                    id="features"
+                    value={formData.features.join(', ')}
+                    onChange={(e) => handleFeatureChange(e.target.value)}
+                    placeholder="Wi-Fi, Кондиционер, Завтрак"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="images">Изображения домиков</Label>
+                  <ImageUploader 
+                    images={formData.images}
+                    onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+                    maxImages={5}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                  />
+                  <Label htmlFor="is_active">Активно</Label>
+                </div>
+              </form>
+            </ScrollArea>
+            <DrawerFooter>
+              <div className="flex gap-2 w-full">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                  Отмена
+                </Button>
+                <Button type="submit" onClick={handleSubmit} className="flex-1">
+                  {editingAccommodation ? 'Обновить' : 'Создать'}
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="name_en">Название (EN)</Label>
-                <Input
-                  id="name_en"
-                  value={formData.name_en}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="name_kz">Название (KZ)</Label>
-                <Input
-                  id="name_kz"
-                  value={formData.name_kz}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name_kz: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>
+                {editingAccommodation ? 'Редактировать размещение' : 'Новое размещение'}
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="flex-1 pr-2">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="name_ru">Название (RU)</Label>
+                    <Input
+                      id="name_ru"
+                      value={formData.name_ru}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_ru: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="name_en">Название (EN)</Label>
+                    <Input
+                      id="name_en"
+                      value={formData.name_en}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="name_kz">Название (KZ)</Label>
+                    <Input
+                      id="name_kz"
+                      value={formData.name_kz}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name_kz: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <Label htmlFor="description_ru">Описание (RU)</Label>
-              <Textarea
-                id="description_ru"
-                value={formData.description_ru}
-                onChange={(e) => setFormData(prev => ({ ...prev, description_ru: e.target.value }))}
-                rows={3}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="description_ru">Описание (RU)</Label>
+                  <Textarea
+                    id="description_ru"
+                    value={formData.description_ru}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description_ru: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="weekday_price">Будние дни (₸)</Label>
-                <Input
-                  id="weekday_price"
-                  type="number"
-                  value={formData.weekday_price}
-                  onChange={(e) => {
-                    const value = Number(e.target.value);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      weekday_price: value,
-                      price: value // синхронизируем price с weekday_price
-                    }));
-                  }}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="weekend_price">Выходные (₸)</Label>
-                <Input
-                  id="weekend_price"
-                  type="number"
-                  value={formData.weekend_price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, weekend_price: Number(e.target.value) }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="total_quantity">Количество домиков</Label>
-                <Input
-                  id="total_quantity"
-                  type="number"
-                  min="1"
-                  value={formData.total_quantity}
-                  onChange={(e) => {
-                    const value = Number(e.target.value);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      total_quantity: value,
-                      available_quantity: Math.min(prev.available_quantity, value)
-                    }));
-                  }}
-                  required
-                />
-              </div>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="weekday_price">Будние дни (₸)</Label>
+                    <Input
+                      id="weekday_price"
+                      type="number"
+                      value={formData.weekday_price}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          weekday_price: value,
+                          price: value
+                        }));
+                      }}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="weekend_price">Выходные (₸)</Label>
+                    <Input
+                      id="weekend_price"
+                      type="number"
+                      value={formData.weekend_price}
+                      onChange={(e) => setFormData(prev => ({ ...prev, weekend_price: Number(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="total_quantity">Количество домиков</Label>
+                    <Input
+                      id="total_quantity"
+                      type="number"
+                      min="1"
+                      value={formData.total_quantity}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          total_quantity: value,
+                          available_quantity: Math.min(prev.available_quantity, value)
+                        }));
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <Label htmlFor="category">Категория</Label>
-              <Select 
-                value={formData.category || "none"} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите категорию" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Без категории</SelectItem>
-                  <SelectItem value="VIP">VIP</SelectItem>
-                  <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label htmlFor="category">Категория</Label>
+                  <Select 
+                    value={formData.category || "none"} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите категорию" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Без категории</SelectItem>
+                      <SelectItem value="VIP">VIP</SelectItem>
+                      <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label htmlFor="features">Удобства (через запятую)</Label>
-              <Input
-                id="features"
-                value={formData.features.join(', ')}
-                onChange={(e) => handleFeatureChange(e.target.value)}
-                placeholder="Wi-Fi, Кондиционер, Завтрак"
-              />
-            </div>
+                <div>
+                  <Label htmlFor="features">Удобства (через запятую)</Label>
+                  <Input
+                    id="features"
+                    value={formData.features.join(', ')}
+                    onChange={(e) => handleFeatureChange(e.target.value)}
+                    placeholder="Wi-Fi, Кондиционер, Завтрак"
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="images">Изображения домиков</Label>
-              <ImageUploader 
-                images={formData.images}
-                onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
-                maxImages={5}
-              />
-            </div>
+                <div>
+                  <Label htmlFor="images">Изображения домиков</Label>
+                  <ImageUploader 
+                    images={formData.images}
+                    onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+                    maxImages={5}
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="image_url">URL основного изображения (устаревшее)</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
+                <div>
+                  <Label htmlFor="image_url">URL основного изображения (устаревшее)</Label>
+                  <Input
+                    id="image_url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-              />
-              <Label htmlFor="is_active">Активно</Label>
-            </div>
-
-            <div className="flex justify-end gap-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                  />
+                  <Label htmlFor="is_active">Активно</Label>
+                </div>
+              </form>
+            </ScrollArea>
+            <div className="flex justify-end gap-2 mt-4 flex-shrink-0">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Отмена
               </Button>
-              <Button type="submit">
+              <Button type="submit" onClick={handleSubmit}>
                 {editingAccommodation ? 'Обновить' : 'Создать'}
               </Button>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
