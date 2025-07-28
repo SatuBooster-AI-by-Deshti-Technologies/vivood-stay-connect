@@ -33,6 +33,8 @@ export type Database = {
           price: number
           total_quantity: number | null
           updated_at: string
+          weekday_price: number
+          weekend_price: number
         }
         Insert: {
           available_quantity?: number | null
@@ -52,6 +54,8 @@ export type Database = {
           price: number
           total_quantity?: number | null
           updated_at?: string
+          weekday_price: number
+          weekend_price: number
         }
         Update: {
           available_quantity?: number | null
@@ -71,6 +75,8 @@ export type Database = {
           price?: number
           total_quantity?: number | null
           updated_at?: string
+          weekday_price?: number
+          weekend_price?: number
         }
         Relationships: []
       }

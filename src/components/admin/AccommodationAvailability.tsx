@@ -25,7 +25,7 @@ export function AccommodationAvailability() {
     try {
       const { data, error } = await supabase
         .from('accommodation_types')
-        .select('id, name_ru, category, total_quantity, available_quantity, is_active')
+        .select('id, name_ru, category, total_quantity, available_quantity, is_active, weekday_price, weekend_price')
         .eq('is_active', true)
         .order('name_ru');
 

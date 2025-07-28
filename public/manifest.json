@@ -1,0 +1,27 @@
+{
+  "name": "Vivood Tau Glamping",
+  "short_name": "Vivood Tau",
+  "description": "Уникальный глэмпинг в сердце гор Сайрам-Өгем",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a202c",
+  "theme_color": "#1a202c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-vivoodtau.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-vivoodtau.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "scope": "/",
+  "categories": ["travel", "lifestyle"],
+  "prefer_related_applications": false
+}

@@ -24,6 +24,8 @@ interface AccommodationType {
   description_ru: string;
   description_en: string;
   price: number;
+  weekday_price: number;
+  weekend_price: number;
   features: string[];
   is_active: boolean;
   images?: string[];
@@ -169,7 +171,7 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('accommodation_types')
-        .select('*')
+        .select('*, weekday_price, weekend_price')
         .eq('is_active', true)
         .order('price');
 
@@ -494,10 +496,14 @@ const Index = () => {
                     </div>
                     
                     {/* Pricing */}
-                    <div className="bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg p-4 space-y-2">
+                    <div className="bg-gradient-to-r from-muted/50 to-muted/30 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Цена за ночь:</span>
-                        <span className="font-bold text-lg text-foreground">{accommodation.price.toLocaleString()} ₸</span>
+                        <span className="text-sm text-muted-foreground">Будние дни:</span>
+                        <span className="font-bold text-lg text-foreground">{accommodation.weekday_price?.toLocaleString() || accommodation.price.toLocaleString()} ₸</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Выходные:</span>
+                        <span className="font-bold text-lg text-accent">{accommodation.weekend_price?.toLocaleString() || Math.round(accommodation.price * 1.3).toLocaleString()} ₸</span>
                       </div>
                     </div>
                     

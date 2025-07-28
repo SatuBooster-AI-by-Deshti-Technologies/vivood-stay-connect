@@ -17,7 +17,21 @@
     <!-- Hide Safari UI elements -->
     <meta name="format-detection" content="telephone=no" />
     <meta name="apple-touch-fullscreen" content="yes" />
-
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => console.log('SW registered'))
+            .catch(registrationError => console.log('SW registration failed'));
+        });
+      }
+    </script>
+    
     <!-- Open Graph -->
     <meta property="og:title" content="Vivood Tau - SatuBooster.kz" />
     <meta property="og:description" content="Уникальный глэмпинг в сердце гор Сайрам-Өгем." />

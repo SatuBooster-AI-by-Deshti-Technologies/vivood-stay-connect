@@ -22,6 +22,8 @@ interface AccommodationType {
   description_en: string;
   description_kz: string;
   price: number;
+  weekday_price: number;
+  weekend_price: number;
   features: string[];
   is_active: boolean;
   image_url: string;
@@ -47,6 +49,8 @@ export function AdminAccommodations() {
     description_en: '',
     description_kz: '',
     price: 0,
+    weekday_price: 0,
+    weekend_price: 0,
     features: [] as string[],
     is_active: true,
     image_url: '',
@@ -64,7 +68,7 @@ export function AdminAccommodations() {
     try {
       const { data, error } = await supabase
         .from('accommodation_types')
-        .select('*')
+        .select('*, weekday_price, weekend_price')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -151,6 +155,8 @@ export function AdminAccommodations() {
       description_en: accommodation.description_en,
       description_kz: accommodation.description_kz,
       price: accommodation.price,
+      weekday_price: accommodation.weekday_price || accommodation.price,
+      weekend_price: accommodation.weekend_price || accommodation.price,
       features: accommodation.features || [],
       is_active: accommodation.is_active,
       image_url: accommodation.image_url || '',
@@ -203,6 +209,8 @@ export function AdminAccommodations() {
       description_en: '',
       description_kz: '',
       price: 0,
+      weekday_price: 0,
+      weekend_price: 0,
       features: [],
       is_active: true,
       image_url: '',
@@ -478,7 +486,7 @@ export function AdminAccommodations() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <Label htmlFor="price">Цена за ночь (₸)</Label>
                 <Input
@@ -490,20 +498,24 @@ export function AdminAccommodations() {
                 />
               </div>
               <div>
-                <Label htmlFor="category">Категория</Label>
-                <Select 
-                  value={formData.category || "none"} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите категорию" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Без категории</SelectItem>
-                    <SelectItem value="VIP">VIP</SelectItem>
-                    <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="weekday_price">Будние дни (₸)</Label>
+                <Input
+                  id="weekday_price"
+                  type="number"
+                  value={formData.weekday_price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, weekday_price: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="weekend_price">Выходные (₸)</Label>
+                <Input
+                  id="weekend_price"
+                  type="number"
+                  value={formData.weekend_price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, weekend_price: Number(e.target.value) }))}
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="total_quantity">Количество домиков</Label>
@@ -523,6 +535,23 @@ export function AdminAccommodations() {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="category">Категория</Label>
+              <Select 
+                value={formData.category || "none"} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value === "none" ? "" : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Без категории</SelectItem>
+                  <SelectItem value="VIP">VIP</SelectItem>
+                  <SelectItem value="СТАНДАРТ">СТАНДАРТ</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
