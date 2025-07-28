@@ -179,7 +179,12 @@ const Index = () => {
       if (error) {
         console.error('Error loading accommodation types:', error);
       } else {
-        setAccommodationTypes(data || []);
+        const processedData = (data || []).map(item => ({
+          ...item,
+          features: Array.isArray(item.features) ? (item.features as string[]) : [],
+          images: Array.isArray(item.images) ? (item.images as string[]) : []
+        }));
+        setAccommodationTypes(processedData);
       }
     } catch (error) {
       console.error('Error loading accommodation types:', error);

@@ -90,7 +90,9 @@ export function AdminAccommodations() {
       // Исправляем данные, если price не синхронизировано с weekday_price
       const processedData = (data || []).map(item => ({
         ...item,
-        price: item.weekday_price || item.price
+        price: item.weekday_price || item.price,
+        features: Array.isArray(item.features) ? (item.features as string[]) : [],
+        images: Array.isArray(item.images) ? (item.images as string[]) : []
       }));
 
       setAccommodations(processedData);
