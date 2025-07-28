@@ -15,69 +15,9 @@ export type Database = {
   public: {
     Tables: {
       accommodation_types: {
-        Row: {
-          available_quantity: number | null
-          category: string | null
-          created_at: string
-          description_en: string | null
-          description_kz: string | null
-          description_ru: string | null
-          features: string[] | null
-          id: string
-          image_url: string | null
-          images: string[] | null
-          is_active: boolean
-          name_en: string
-          name_kz: string
-          name_ru: string
-          price: number
-          total_quantity: number | null
-          updated_at: string
-          weekday_price: number
-          weekend_price: number
-        }
-        Insert: {
-          available_quantity?: number | null
-          category?: string | null
-          created_at?: string
-          description_en?: string | null
-          description_kz?: string | null
-          description_ru?: string | null
-          features?: string[] | null
-          id?: string
-          image_url?: string | null
-          images?: string[] | null
-          is_active?: boolean
-          name_en: string
-          name_kz: string
-          name_ru: string
-          price: number
-          total_quantity?: number | null
-          updated_at?: string
-          weekday_price: number
-          weekend_price: number
-        }
-        Update: {
-          available_quantity?: number | null
-          category?: string | null
-          created_at?: string
-          description_en?: string | null
-          description_kz?: string | null
-          description_ru?: string | null
-          features?: string[] | null
-          id?: string
-          image_url?: string | null
-          images?: string[] | null
-          is_active?: boolean
-          name_en?: string
-          name_kz?: string
-          name_ru?: string
-          price?: number
-          total_quantity?: number | null
-          updated_at?: string
-          weekday_price?: number
-          weekend_price?: number
-        }
+        Row: {}
+        Insert: {}
+        Update: {}
         Relationships: []
       }
       accounting_entries: {

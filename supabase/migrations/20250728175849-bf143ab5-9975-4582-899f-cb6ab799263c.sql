@@ -1,0 +1,56 @@
+-- Создание таблицы accommodation_types
+CREATE TABLE public.accommodation_types (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name_kz TEXT NOT NULL,
+    name_ru TEXT NOT NULL,
+    name_en TEXT NOT NULL,
+    description_kz TEXT,
+    description_ru TEXT,
+    description_en TEXT,
+    price NUMERIC(10,2) NOT NULL,
+    features JSON,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    images JSON,
+    category TEXT,
+    total_quantity INTEGER,
+    available_quantity INTEGER,
+    weekday_price NUMERIC(10,2),
+    weekend_price NUMERIC(10,2)
+);
+
+-- Включение RLS
+ALTER TABLE public.accommodation_types ENABLE ROW LEVEL SECURITY;
+
+-- Политики RLS
+CREATE POLICY "Все могут просматривать активные размещения" 
+ON public.accommodation_types 
+FOR SELECT 
+USING (is_active = true);
+
+CREATE POLICY "Админы и менеджеры могут управлять размещениями" 
+ON public.accommodation_types 
+FOR ALL 
+USING (is_admin_or_manager()) 
+WITH CHECK (is_admin_or_manager());
+
+-- Триггер для обновления updated_at
+CREATE TRIGGER update_accommodation_types_updated_at
+    BEFORE UPDATE ON public.accommodation_types
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Вставка данных
+INSERT INTO "public"."accommodation_types" ("id", "name_kz", "name_ru", "name_en", "description_kz", "description_ru", "description_en", "price", "features", "image_url", "is_active", "created_at", "updated_at", "images", "category", "total_quantity", "available_quantity", "weekday_price", "weekend_price") VALUES 
+('01d44d0f-7ea8-44e9-b1d5-a15e3357cc19', 'Монша', 'Баня глемпинг', 'Glamping Bathhouse', '', 'На 3 часа минимально.', '', '20000.00', '["Душ"]', '', 'true', '2025-07-28 14:00:39.020911+00', '2025-07-28 14:00:59.087039+00', '[]', 'СТАНДАРТ', '1', '1', '20000', '20000'),
+('02657810-5931-47ab-a715-85731f69efe2', 'Тапшан', 'Тапчан', 'Tapped', '', 'Тапчан для семейного отдыха.', '', '15000.00', '["палас"]', '', 'true', '2025-07-28 14:28:50.506143+00', '2025-07-28 14:28:50.96+00', '[]', '', '4', '1', '15000', '15000'),
+('3177c0c7-bebd-4f88-9c79-141a9afc532c', '№10 Шаршы үйшік', '№10 Квадратный домик', '№10 Square House', '', 'Просторный квадратный домик с балконом, камином и сауной. Идеален для ценителей уюта, уединения и VIP-отдыха в горах. Почувствуйте тепло дерева и дух свободы!', '', '40000.00', '["Wi-Fi","Кондиционер","Терасса"]', '', 'true', '2025-07-28 14:06:17.563076+00', '2025-07-28 14:07:37.996054+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.35103587124445446.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.07910882775001049.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.7216874311518665.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.7954012635741824.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.8380007324029033.jpg"]', 'VIP', '1', '1', '40000', '50000'),
+('349f0ac0-8792-4647-83ea-2f49cdcc705e', '№12 Шаршы үйшік', '№12 Квадратный домик', '№12 Square House', '', 'Просторный квадратный домик с балконом, камином и сауной. Идеален для ценителей уюта, уединения и VIP-отдыха в горах. Почувствуйте тепло дерева и дух свободы!', '', '40000.00', '[]', '', 'true', '2025-07-28 14:09:49.947104+00', '2025-07-28 14:10:43.649598+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.8478867728686673.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.7100740346636646.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.39741981469895393.jpg"]', 'VIP', '1', '1', '40000', '45000'),
+('4e67c0e5-6005-45b9-bc42-a7b16f15ee32', 'Глемпинг', 'Глемпинг', 'Glamping', '', 'Современный круговой глемпинг в сердце природы. Идеальное место для уединения, отдыха и перезагрузки. Комфорт, уют и захватывающие виды ждут вас!', '', '55000.00', '["Wi-Fi","Кондиционер","Душ"]', '', 'true', '2025-07-28 14:35:04.738237+00', '2025-07-28 14:35:05.258+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.9612883284484589.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.1313571705879354.jpg"]', 'VIP', '2', '1', '55000', '65000'),
+('52214199-0c5a-454e-8269-a4f1e95be42c', 'Глемпинг', 'Глемпинг', 'Glamping', '', 'Современный круговой глемпинг в сердце природы. Идеальное место для уединения, отдыха и перезагрузки. Комфорт, уют и захватывающие виды ждут вас!', '', '50000.00', '["Wi-Fi","Кондиционер"]', '', 'true', '2025-07-28 14:33:27.280094+00', '2025-07-28 14:34:23.280343+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.09413572821357818.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.09504014522518744.jpg"]', 'СТАНДАРТ', '1', '1', '50000', '60000'),
+('637a3e5e-edd1-46af-b4c6-ce6164b4b1b9', 'Капсула', 'Капсула', 'Capsule', '', '', '', '100000.00', '[]', '', 'true', '2025-07-28 14:32:03.920949+00', '2025-07-28 14:32:04.619+00', '[]', '', '2', '1', '100000', '120000'),
+('67a2df08-78f6-4cc5-89ae-64451f6cb1a9', '№13 Шаршы үйшік', '№13 Квадратный домик', '№13 Square House', '', 'Просторный квадратный домик с балконом, камином и сауной. Идеален для ценителей уюта, уединения и VIP-отдыха в горах. Почувствуйте тепло дерева и дух свободы!', '', '40000.00', '["Wi-Fi","Кондиционер","Терасса"]', '', 'true', '2025-07-28 14:13:15.932639+00', '2025-07-28 14:13:40.132643+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.6520041779512104.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.5642778068433063.jpg"]', 'СТАНДАРТ', '1', '1', '40000', '45000'),
+('bd4e114e-db87-41f1-953f-c8b98a9fe41c', '№15 Шаршы үйшік', '№15 Квадратный домик', '№15 Square House', '', 'Просторный квадратный домик с балконом, камином и сауной. Идеален для ценителей уюта, уединения и VIP-отдыха в горах. Почувствуйте тепло дерева и дух свободы!', '', '40000.00', '["Wi-Fi","Кондиционер","Терасса"]', '', 'true', '2025-07-28 14:18:27.534149+00', '2025-07-28 14:18:28.282+00', '["https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.7341287228448572.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.14290065381842476.jpg","https://ltosbjwmwhcljzgcwcre.supabase.co/storage/v1/object/public/accommodation-images/0.5216642743643726.jpg"]', 'СТАНДАРТ', '1', '1', '40000', '45000'),
+('c6d827f1-4830-46a2-a37a-afe22906a56d', 'Киіз үй', 'Юрта', 'Kazakh National House', '', 'Уютная юрта в горах для полного единения с природой. Традиционный казахский стиль, свежий воздух, тишина и комфорт для вашего незабываемого отдыха.', '', '30000.00', '[]', '', 'true', '2025-07-28 14:31:17.826759+00', '2025-07-28 14:31:18.041+00', '[]', '', '4', '1', '30000', '50000');
