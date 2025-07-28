@@ -68,7 +68,7 @@ export function AdminAccommodations() {
     try {
       const { data, error } = await supabase
         .from('accommodation_types')
-        .select('*, weekday_price, weekend_price')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
