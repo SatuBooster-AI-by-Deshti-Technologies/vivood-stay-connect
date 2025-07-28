@@ -81,7 +81,13 @@ export function AdminAccommodations() {
         return;
       }
 
-      setAccommodations(data || []);
+      // Исправляем данные, если price не синхронизировано с weekday_price
+      const processedData = (data || []).map(item => ({
+        ...item,
+        price: item.weekday_price || item.price
+      }));
+
+      setAccommodations(processedData);
     } catch (error) {
       console.error('Error loading accommodations:', error);
     } finally {
@@ -93,11 +99,18 @@ export function AdminAccommodations() {
     e.preventDefault();
     
     try {
+      // Синхронизируем price с weekday_price
+      const dataToSave = {
+        ...formData,
+        price: formData.weekday_price,
+        updated_at: new Date().toISOString()
+      };
+
       if (editingAccommodation) {
         // Обновление существующего размещения
         const { error } = await supabase
           .from('accommodation_types')
-          .update(formData)
+          .update(dataToSave)
           .eq('id', editingAccommodation.id);
 
         if (error) {
@@ -118,7 +131,7 @@ export function AdminAccommodations() {
         // Создание нового размещения
         const { error } = await supabase
           .from('accommodation_types')
-          .insert([formData]);
+          .insert([dataToSave]);
 
         if (error) {
           console.error('Error creating accommodation:', error);
@@ -183,7 +196,7 @@ export function AdminAccommodations() {
         console.error('Error deleting accommodation:', error);
         toast({
           title: "Ошибка",
-          description: "Не удалось удалить размещение",
+          description: `Не удалось удалить размещение: ${error.message}`,
           variant: "destructive"
         });
         return;
@@ -197,6 +210,11 @@ export function AdminAccommodations() {
       await loadAccommodations();
     } catch (error) {
       console.error('Error deleting accommodation:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при удалении",
+        variant: "destructive"
+      });
     }
   };
 
