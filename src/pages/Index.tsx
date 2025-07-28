@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 type Language = 'kz' | 'ru' | 'en';
 
@@ -410,32 +411,37 @@ const Index = () => {
             {loading ? (
               <div className="col-span-full text-center">Загрузка...</div>
             ) : accommodationTypes.map((accommodation) => (
-                <Card key={accommodation.id} className="group hover:shadow-elegant transition-all duration-300 border-0 shadow-lg bg-card/80 backdrop-blur-sm hover:-translate-y-2">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    {accommodation.images && accommodation.images.length > 0 ? (
-                      <div className="relative">
-                        <img 
-                          src={accommodation.images[0]}
-                          alt={accommodation.name_ru}
-                          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = '/background-image.jpg';
-                          }}
-                        />
-                        {accommodation.images.length > 1 && (
-                          <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
-                            <Camera className="w-3 h-3" />
-                            {accommodation.images.length}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <img 
-                        src="/placeholder.svg" 
-                        alt={accommodation.name_ru}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    )}
+                 <Card key={accommodation.id} className="group hover:shadow-elegant transition-all duration-300 border-0 shadow-lg bg-card/80 backdrop-blur-sm hover:-translate-y-2">
+                   <div className="relative overflow-hidden rounded-t-lg">
+                     {accommodation.images && accommodation.images.length > 1 ? (
+                       <Carousel className="w-full">
+                         <CarouselContent>
+                           {accommodation.images.map((image, imgIndex) => (
+                             <CarouselItem key={imgIndex}>
+                               <img 
+                                 src={image}
+                                 alt={`${accommodation.name_ru} - ${imgIndex + 1}`}
+                                 className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                                 onError={(e) => {
+                                   e.currentTarget.src = '/background-image.jpg';
+                                 }}
+                               />
+                             </CarouselItem>
+                           ))}
+                         </CarouselContent>
+                         <CarouselPrevious className="left-2" />
+                         <CarouselNext className="right-2" />
+                       </Carousel>
+                     ) : (
+                       <img 
+                         src={accommodation.images?.[0] || '/placeholder.svg'}
+                         alt={accommodation.name_ru}
+                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                         onError={(e) => {
+                           e.currentTarget.src = '/background-image.jpg';
+                         }}
+                       />
+                     )}
                     <div className="absolute top-4 right-4 flex flex-col gap-2">
                       {accommodation.category && (
                         <Badge 

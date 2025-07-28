@@ -2,10 +2,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/admin/AppSidebar";
 import { AdminRoutes } from "@/components/admin/AdminRoutes";
 import { Header } from "@/components/admin/Header";
+import { NotificationSystem } from "@/components/admin/NotificationSystem";
 
 export default function Admin() {
   return (
     <SidebarProvider>
+      <NotificationSystem />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1">
