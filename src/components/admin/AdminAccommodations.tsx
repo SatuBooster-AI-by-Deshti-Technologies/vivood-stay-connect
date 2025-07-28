@@ -66,6 +66,7 @@ export function AdminAccommodations() {
 
   const loadAccommodations = async () => {
     try {
+      console.log('Loading accommodations...');
       const { data, error } = await supabase
         .from('accommodation_types')
         .select('*')
@@ -75,12 +76,13 @@ export function AdminAccommodations() {
         console.error('Error loading accommodations:', error);
         toast({
           title: "Ошибка",
-          description: "Не удалось загрузить размещения",
+          description: `Не удалось загрузить размещения: ${error.message}`,
           variant: "destructive"
         });
         return;
       }
 
+      console.log('Loaded accommodations:', data);
       // Исправляем данные, если price не синхронизировано с weekday_price
       const processedData = (data || []).map(item => ({
         ...item,
@@ -90,6 +92,11 @@ export function AdminAccommodations() {
       setAccommodations(processedData);
     } catch (error) {
       console.error('Error loading accommodations:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла неожиданная ошибка при загрузке",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -102,47 +109,55 @@ export function AdminAccommodations() {
       // Синхронизируем price с weekday_price
       const dataToSave = {
         ...formData,
-        price: formData.weekday_price,
+        price: formData.weekday_price || formData.price, // Обеспечиваем что price не пустое
         updated_at: new Date().toISOString()
       };
 
+      console.log('Saving accommodation data:', dataToSave);
+
       if (editingAccommodation) {
         // Обновление существующего размещения
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('accommodation_types')
           .update(dataToSave)
-          .eq('id', editingAccommodation.id);
+          .eq('id', editingAccommodation.id)
+          .select()
+          .single();
 
         if (error) {
           console.error('Error updating accommodation:', error);
           toast({
             title: "Ошибка",
-            description: "Не удалось обновить размещение",
+            description: `Не удалось обновить размещение: ${error.message}`,
             variant: "destructive"
           });
           return;
         }
 
+        console.log('Updated accommodation:', data);
         toast({
           title: "Успешно",
           description: "Размещение обновлено"
         });
       } else {
         // Создание нового размещения
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('accommodation_types')
-          .insert([dataToSave]);
+          .insert([dataToSave])
+          .select()
+          .single();
 
         if (error) {
           console.error('Error creating accommodation:', error);
           toast({
             title: "Ошибка",
-            description: "Не удалось создать размещение",
+            description: `Не удалось создать размещение: ${error.message}`,
             variant: "destructive"
           });
           return;
         }
 
+        console.log('Created accommodation:', data);
         toast({
           title: "Успешно",
           description: "Размещение создано"
@@ -155,6 +170,11 @@ export function AdminAccommodations() {
       await loadAccommodations();
     } catch (error) {
       console.error('Error saving accommodation:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла неожиданная ошибка",
+        variant: "destructive"
+      });
     }
   };
 
@@ -186,11 +206,14 @@ export function AdminAccommodations() {
       return;
     }
 
+    console.log('Deleting accommodation with ID:', accommodationId);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('accommodation_types')
         .delete()
-        .eq('id', accommodationId);
+        .eq('id', accommodationId)
+        .select();
 
       if (error) {
         console.error('Error deleting accommodation:', error);
@@ -202,6 +225,7 @@ export function AdminAccommodations() {
         return;
       }
 
+      console.log('Deleted accommodation:', data);
       toast({
         title: "Успешно",
         description: "Размещение удалено"
