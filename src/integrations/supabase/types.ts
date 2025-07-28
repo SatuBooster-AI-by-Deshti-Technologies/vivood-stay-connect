@@ -15,9 +15,69 @@ export type Database = {
   public: {
     Tables: {
       accommodation_types: {
-        Row: {}
-        Insert: {}
-        Update: {}
+        Row: {
+          available_quantity: number | null
+          category: string | null
+          created_at: string | null
+          description_en: string | null
+          description_kz: string | null
+          description_ru: string | null
+          features: Json | null
+          id: string
+          image_url: string | null
+          images: Json | null
+          is_active: boolean | null
+          name_en: string | null
+          name_kz: string | null
+          name_ru: string
+          price: number
+          total_quantity: number | null
+          updated_at: string | null
+          weekday_price: number | null
+          weekend_price: number | null
+        }
+        Insert: {
+          available_quantity?: number | null
+          category?: string | null
+          created_at?: string | null
+          description_en?: string | null
+          description_kz?: string | null
+          description_ru?: string | null
+          features?: Json | null
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean | null
+          name_en?: string | null
+          name_kz?: string | null
+          name_ru: string
+          price: number
+          total_quantity?: number | null
+          updated_at?: string | null
+          weekday_price?: number | null
+          weekend_price?: number | null
+        }
+        Update: {
+          available_quantity?: number | null
+          category?: string | null
+          created_at?: string | null
+          description_en?: string | null
+          description_kz?: string | null
+          description_ru?: string | null
+          features?: Json | null
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean | null
+          name_en?: string | null
+          name_kz?: string | null
+          name_ru?: string
+          price?: number
+          total_quantity?: number | null
+          updated_at?: string | null
+          weekday_price?: number | null
+          weekend_price?: number | null
+        }
         Relationships: []
       }
       accounting_entries: {
