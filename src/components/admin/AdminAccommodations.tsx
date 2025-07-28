@@ -506,22 +506,19 @@ export function AdminAccommodations() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <Label htmlFor="price">Цена за ночь (₸)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
-                  required
-                />
-              </div>
-              <div>
                 <Label htmlFor="weekday_price">Будние дни (₸)</Label>
                 <Input
                   id="weekday_price"
                   type="number"
                   value={formData.weekday_price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, weekday_price: Number(e.target.value) }))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      weekday_price: value,
+                      price: value // синхронизируем price с weekday_price
+                    }));
+                  }}
                   required
                 />
               </div>
