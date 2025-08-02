@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "YOUR_NEW_SUPABASE_URL";
-const SUPABASE_PUBLISHABLE_KEY = "YOUR_NEW_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://your-project.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "your-anon-key-here";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
