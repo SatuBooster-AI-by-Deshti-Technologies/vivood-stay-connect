@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivood Admin - Панель управления</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .auth-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: 4rem auto;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .dashboard {
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.confirmed { background: #d4edda; color: #155724; }
+        .status.cancelled { background: #f8d7da; color: #721c24; }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div id="loginForm" class="auth-form">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Вход в систему</h2>
+        <div id="authAlert"></div>
+        <form id="loginFormElement">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="admin@vivood.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" value="admin123" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">Vivood Admin</div>
+                <div class="user-info">
+                    <span id="userName">Администратор</span>
+                    <button id="logoutBtn" class="btn btn-secondary">Выйти</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalBookings">0</div>
+                    <div class="stat-label">Бронирований</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalClients">0</div>
+                    <div class="stat-label">Клиентов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAccommodations">0</div>
+                    <div class="stat-label">Типов размещения</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRevenue">0 ₸</div>
+                    <div class="stat-label">Общий доход</div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <div class="tab active" data-tab="bookings">Бронирования</div>
+                <div class="tab" data-tab="clients">Клиенты</div>
+                <div class="tab" data-tab="accommodations">Размещения</div>
+                <div class="tab" data-tab="tasks">Задачи</div>
+            </div>
+
+            <!-- Bookings Tab -->
+            <div class="tab-content active" id="bookings">
+                <h3>Управление бронированиями</h3>
+                <div id="bookingsLoading" class="loading">Загрузка...</div>
+                <div id="bookingsTable"></div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div class="tab-content" id="clients">
+                <h3>База клиентов</h3>
+                <div id="clientsLoading" class="loading">Загрузка...</div>
+                <div id="clientsTable"></div>
+            </div>
+
+            <!-- Accommodations Tab -->
+            <div class="tab-content" id="accommodations">
+                <h3>Типы размещения</h3>
+                <div id="accommodationsLoading" class="loading">Загрузка...</div>
+                <div id="accommodationsTable"></div>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div class="tab-content" id="tasks">
+                <h3>Управление задачами</h3>
+                <div id="tasksLoading" class="loading">Загрузка...</div>
+                <div id="tasksTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let currentTab = 'bookings';
+
+        // API base URL
+        const API_BASE = './api';
+
+        // DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const dashboard = document.getElementById('dashboard');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const authAlert = document.getElementById('authAlert');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userName = document.getElementById('userName');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            loginFormElement.addEventListener('submit', handleLogin);
+            
+            // Logout button
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const credentials = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth.php/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(credentials)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    showDashboard();
+                    loadStats();
+                    loadTabData(currentTab);
+                } else {
+                    showAlert(data.error || 'Ошибка входа', 'error');
+                }
+            } catch (error) {
+                showAlert('Ошибка соединения с сервером', 'error');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch(`${API_BASE}/auth.php/logout`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            currentUser = null;
+            showLogin();
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/auth.php/me`);
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    showDashboard();
+                    loadStats();
+                    loadTabData(currentTab);
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            loginForm.style.display = 'block';
+            dashboard.style.display = 'none';
+        }
+
+        function showDashboard() {
+            loginForm.style.display = 'none';
+            dashboard.style.display = 'block';
+            userName.textContent = currentUser.name;
+        }
+
+        function showAlert(message, type) {
+            authAlert.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                authAlert.innerHTML = '';
+            }, 5000);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            currentTab = tabName;
+            loadTabData(tabName);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats.php`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('totalBookings').textContent = data.totals?.bookings || 0;
+                    document.getElementById('totalClients').textContent = data.totals?.clients || 0;
+                    document.getElementById('totalAccommodations').textContent = data.totals?.accommodations || 0;
+                    document.getElementById('totalRevenue').textContent = `${data.revenue || 0} ₸`;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadTabData(tabName) {
+            const loadingElement = document.getElementById(`${tabName}Loading`);
+            const tableElement = document.getElementById(`${tabName}Table`);
+            
+            loadingElement.style.display = 'block';
+            tableElement.innerHTML = '';
+
+            try {
+                let endpoint = '';
+                switch (tabName) {
+                    case 'bookings':
+                        endpoint = 'bookings.php';
+                        break;
+                    case 'clients':
+                        endpoint = 'clients.php';
+                        break;
+                    case 'accommodations':
+                        endpoint = 'accommodations.php';
+                        break;
+                    case 'tasks':
+                        endpoint = 'tasks.php';
+                        break;
+                }
+
+                const response = await fetch(`${API_BASE}/${endpoint}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    renderTable(tabName, data);
+                } else {
+                    tableElement.innerHTML = `<div class="alert alert-error">Ошибка загрузки данных: ${data.error}</div>`;
+                }
+            } catch (error) {
+                tableElement.innerHTML = `<div class="alert alert-error">Ошибка соединения с сервером</div>`;
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
+
+        function renderTable(type, data) {
+            const tableElement = document.getElementById(`${type}Table`);
+            
+            if (!data || data.length === 0) {
+                tableElement.innerHTML = '<p>Данные отсутствуют</p>';
+                return;
+            }
+
+            let html = '<table class="table"><thead><tr>';
+            
+            // Table headers based on type
+            switch (type) {
+                case 'bookings':
+                    html += '<th>ID</th><th>Имя</th><th>Email</th><th>Размещение</th><th>Заезд</th><th>Выезд</th><th>Гости</th><th>Статус</th><th>Сумма</th>';
+                    break;
+                case 'clients':
+                    html += '<th>ID</th><th>Имя</th><th>Email</th><th>Телефон</th><th>Источник</th><th>Создан</th>';
+                    break;
+                case 'accommodations':
+                    html += '<th>ID</th><th>Название</th><th>Цена</th><th>Категория</th><th>Количество</th><th>Доступно</th><th>Активен</th>';
+                    break;
+                case 'tasks':
+                    html += '<th>ID</th><th>Заголовок</th><th>Статус</th><th>Приоритет</th><th>Создал</th><th>Назначена</th><th>Срок</th>';
+                    break;
+            }
+            
+            html += '</tr></thead><tbody>';
+            
+            // Table rows
+            data.forEach(item => {
+                html += '<tr>';
+                switch (type) {
+                    case 'bookings':
+                        html += `
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.email}</td>
+                            <td>${item.accommodation_type}</td>
+                            <td>${item.check_in}</td>
+                            <td>${item.check_out}</td>
+                            <td>${item.guests}</td>
+                            <td><span class="status ${item.status}">${item.status}</span></td>
+                            <td>${item.total_price ? item.total_price + ' ₸' : '-'}</td>
+                        `;
+                        break;
+                    case 'clients':
+                        html += `
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.email}</td>
+                            <td>${item.phone}</td>
+                            <td>${item.source}</td>
+                            <td>${new Date(item.created_at).toLocaleDateString()}</td>
+                        `;
+                        break;
+                    case 'accommodations':
+                        html += `
+                            <td>${item.id}</td>
+                            <td>${item.name_ru}</td>
+                            <td>${item.price} ₸</td>
+                            <td>${item.category || '-'}</td>
+                            <td>${item.total_quantity}</td>
+                            <td>${item.available_quantity}</td>
+                            <td>${item.is_active ? 'Да' : 'Нет'}</td>
+                        `;
+                        break;
+                    case 'tasks':
+                        html += `
+                            <td>${item.id}</td>
+                            <td>${item.title}</td>
+                            <td><span class="status ${item.status}">${item.status}</span></td>
+                            <td>${item.priority}</td>
+                            <td>${item.created_by_name || '-'}</td>
+                            <td>${item.assigned_to_name || '-'}</td>
+                            <td>${item.due_date || '-'}</td>
+                        `;
+                        break;
+                }
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            tableElement.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

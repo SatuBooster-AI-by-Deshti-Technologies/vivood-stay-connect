@@ -1,77 +1,40 @@
 <?php
-require_once '../config/database.php';
-require_once '../config/auth.php';
 require_once '../config/cors.php';
+require_once '../config/database.php';
 
-setupCORS();
-
-$db = new Database();
-$auth = new Auth();
 $method = $_SERVER['REQUEST_METHOD'];
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$path = str_replace('/api/auth', '', $path);
+$path = $_SERVER['PATH_INFO'] ?? '';
 
 try {
     switch ($method) {
         case 'POST':
-            if ($path === '/register') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                
-                if (!$data['email'] || !$data['password'] || !$data['name']) {
+            if ($path === '/login') {
+                // Login
+                $input = json_decode(file_get_contents('php://input'), true);
+                $email = $input['email'] ?? '';
+                $password = $input['password'] ?? '';
+
+                if (empty($email) || empty($password)) {
                     http_response_code(400);
-                    echo json_encode(['error' => 'Email, password and name are required']);
+                    echo json_encode(['error' => 'Email and password required']);
                     exit;
                 }
 
-                // Check if user exists
-                $existing = $db->fetch('SELECT id FROM users WHERE email = ?', [$data['email']]);
-                if ($existing) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'User already exists']);
-                    exit;
-                }
+                $stmt = $pdo->prepare("SELECT u.id, u.email, u.password, u.name, p.role FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.email = ?");
+                $stmt->execute([$email]);
+                $user = $stmt->fetch();
 
-                // Create user
-                $hashedPassword = $auth->hashPassword($data['password']);
-                $db->query('INSERT INTO users (email, password, name, created_at) VALUES (?, ?, ?, NOW())', 
-                    [$data['email'], $hashedPassword, $data['name']]);
-                
-                $userId = $db->lastInsertId();
-
-                // Create profile
-                $db->query('INSERT INTO profiles (user_id, name, role, created_at) VALUES (?, ?, ?, NOW())', 
-                    [$userId, $data['name'], 'user']);
-
-                $token = $auth->generateJWT($userId, $data['email'], 'user');
-
-                echo json_encode([
-                    'user' => [
-                        'id' => $userId,
-                        'email' => $data['email'],
-                        'name' => $data['name'],
-                        'role' => 'user'
-                    ],
-                    'access_token' => $token
-                ]);
-
-            } elseif ($path === '/login') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                
-                if (!$data['email'] || !$data['password']) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Email and password are required']);
-                    exit;
-                }
-
-                $user = $db->fetch('SELECT u.*, p.role FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.email = ?', [$data['email']]);
-                
-                if (!$user || !$auth->verifyPassword($data['password'], $user['password'])) {
+                if (!$user || !password_verify($password, $user['password'])) {
                     http_response_code(401);
                     echo json_encode(['error' => 'Invalid credentials']);
                     exit;
                 }
 
-                $token = $auth->generateJWT($user['id'], $user['email'], $user['role'] ?? 'user');
+                session_start();
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['name'] = $user['name'];
+                $_SESSION['role'] = $user['role'] ?? 'user';
 
                 echo json_encode([
                     'user' => [
@@ -79,23 +42,83 @@ try {
                         'email' => $user['email'],
                         'name' => $user['name'],
                         'role' => $user['role'] ?? 'user'
-                    ],
-                    'access_token' => $token
+                    ]
                 ]);
+
+            } elseif ($path === '/register') {
+                // Register
+                $input = json_decode(file_get_contents('php://input'), true);
+                $email = $input['email'] ?? '';
+                $password = $input['password'] ?? '';
+                $name = $input['name'] ?? '';
+
+                if (empty($email) || empty($password) || empty($name)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'All fields required']);
+                    exit;
+                }
+
+                // Check if user exists
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'User already exists']);
+                    exit;
+                }
+
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                
+                $pdo->beginTransaction();
+                
+                // Create user
+                $stmt = $pdo->prepare("INSERT INTO users (email, password, name) VALUES (?, ?, ?)");
+                $stmt->execute([$email, $hashedPassword, $name]);
+                $userId = $pdo->lastInsertId();
+                
+                // Create profile
+                $stmt = $pdo->prepare("INSERT INTO profiles (user_id, name, role) VALUES (?, ?, 'user')");
+                $stmt->execute([$userId, $name]);
+                
+                $pdo->commit();
+
+                session_start();
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['email'] = $email;
+                $_SESSION['name'] = $name;
+                $_SESSION['role'] = 'user';
+
+                echo json_encode([
+                    'user' => [
+                        'id' => $userId,
+                        'email' => $email,
+                        'name' => $name,
+                        'role' => 'user'
+                    ]
+                ]);
+
+            } elseif ($path === '/logout') {
+                session_start();
+                session_destroy();
+                echo json_encode(['message' => 'Logged out successfully']);
             }
             break;
 
         case 'GET':
             if ($path === '/me') {
-                $user = $auth->requireAuth();
-                $userData = $db->fetch('SELECT u.*, p.role FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.id = ?', [$user['user_id']]);
-                
+                session_start();
+                if (!isset($_SESSION['user_id'])) {
+                    http_response_code(401);
+                    echo json_encode(['error' => 'Not authenticated']);
+                    exit;
+                }
+
                 echo json_encode([
                     'user' => [
-                        'id' => $userData['id'],
-                        'email' => $userData['email'],
-                        'name' => $userData['name'],
-                        'role' => $userData['role'] ?? 'user'
+                        'id' => $_SESSION['user_id'],
+                        'email' => $_SESSION['email'],
+                        'name' => $_SESSION['name'],
+                        'role' => $_SESSION['role']
                     ]
                 ]);
             }
@@ -107,6 +130,6 @@ try {
     }
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
 ?>

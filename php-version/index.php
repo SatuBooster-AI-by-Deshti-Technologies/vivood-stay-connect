@@ -1,140 +1,172 @@
-<?php
-require_once 'config/cors.php';
-
-setupCORS();
-
-// Simple router for API endpoints
-$request_uri = $_SERVER['REQUEST_URI'];
-$path = parse_url($request_uri, PHP_URL_PATH);
-
-// Remove leading slash
-$path = ltrim($path, '/');
-
-// Route to appropriate API endpoint
-if (strpos($path, 'api/auth') === 0) {
-    require_once 'api/auth.php';
-} elseif (strpos($path, 'api/accommodations') === 0) {
-    require_once 'api/accommodations.php';
-} elseif (strpos($path, 'api/bookings') === 0) {
-    require_once 'api/bookings.php';
-} elseif (strpos($path, 'api/clients') === 0) {
-    require_once 'api/clients.php';
-} elseif (strpos($path, 'api/stats') === 0) {
-    require_once 'api/stats.php';
-} elseif (strpos($path, 'api/upload') === 0) {
-    require_once 'api/upload.php';
-} elseif (strpos($path, 'uploads/') === 0) {
-    // Serve uploaded files
-    $filename = str_replace('uploads/', '', $path);
-    $filepath = __DIR__ . '/uploads/' . $filename;
-    
-    if (file_exists($filepath)) {
-        $mimeType = mime_content_type($filepath);
-        header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($filepath));
-        readfile($filepath);
-    } else {
-        http_response_code(404);
-        echo json_encode(['error' => 'File not found']);
-    }
-} elseif ($path === '' || $path === 'api') {
-    // Root endpoint
-    echo json_encode([
-        'message' => 'Vivood PHP API is running',
-        'timestamp' => date('c'),
-        'endpoints' => [
-            '/api/auth' => 'Authentication endpoints',
-            '/api/accommodations' => 'Accommodation management',
-            '/api/bookings' => 'Booking management',
-            '/api/clients' => 'Client management',
-            '/api/stats' => 'Statistics',
-            '/api/upload' => 'File upload'
-        ]
-    ]);
-} elseif (strpos($path, 'api/') === 0) {
-    // API endpoint not found
-    http_response_code(404);
-    echo json_encode(['error' => 'API endpoint not found']);
-} else {
-    // Serve simple admin interface
-    ?>
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Vivood Admin</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            h1 { color: #333; text-align: center; }
-            .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
-            .method { display: inline-block; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px; font-weight: bold; margin-right: 10px; }
-            .get { background: #28a745; }
-            .post { background: #007bff; }
-            .put { background: #ffc107; color: #212529; }
-            .delete { background: #dc3545; }
-            code { background: #e9ecef; padding: 2px 5px; border-radius: 3px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🏨 Vivood PHP API</h1>
-            <p>API успешно запущен. Документация по эндпоинтам:</p>
-            
-            <div class="endpoint">
-                <h3>🔐 Аутентификация</h3>
-                <div><span class="method post">POST</span><code>/api/auth/register</code> - Регистрация пользователя</div>
-                <div><span class="method post">POST</span><code>/api/auth/login</code> - Авторизация</div>
-                <div><span class="method get">GET</span><code>/api/auth/me</code> - Получить текущего пользователя</div>
-            </div>
-            
-            <div class="endpoint">
-                <h3>🏠 Размещение</h3>
-                <div><span class="method get">GET</span><code>/api/accommodations</code> - Все активные</div>
-                <div><span class="method get">GET</span><code>/api/accommodations/admin</code> - Все (админ)</div>
-                <div><span class="method post">POST</span><code>/api/accommodations</code> - Создать</div>
-                <div><span class="method put">PUT</span><code>/api/accommodations/{id}</code> - Обновить</div>
-                <div><span class="method delete">DELETE</span><code>/api/accommodations/{id}</code> - Удалить</div>
-            </div>
-            
-            <div class="endpoint">
-                <h3>📅 Бронирования</h3>
-                <div><span class="method get">GET</span><code>/api/bookings</code> - Все бронирования</div>
-                <div><span class="method get">GET</span><code>/api/bookings/calendar</code> - События календаря</div>
-                <div><span class="method post">POST</span><code>/api/bookings</code> - Создать бронирование</div>
-                <div><span class="method put">PUT</span><code>/api/bookings/{id}</code> - Обновить статус</div>
-            </div>
-            
-            <div class="endpoint">
-                <h3>👥 Клиенты</h3>
-                <div><span class="method get">GET</span><code>/api/clients</code> - Все клиенты</div>
-                <div><span class="method get">GET</span><code>/api/clients/{id}</code> - Один клиент</div>
-                <div><span class="method post">POST</span><code>/api/clients</code> - Создать клиента</div>
-                <div><span class="method put">PUT</span><code>/api/clients/{id}</code> - Обновить</div>
-                <div><span class="method delete">DELETE</span><code>/api/clients/{id}</code> - Удалить</div>
-            </div>
-            
-            <div class="endpoint">
-                <h3>📊 Статистика</h3>
-                <div><span class="method get">GET</span><code>/api/stats</code> - Статистика дашборда</div>
-            </div>
-            
-            <div class="endpoint">
-                <h3>📁 Загрузка файлов</h3>
-                <div><span class="method post">POST</span><code>/api/upload/image</code> - Загрузить изображение</div>
-                <div><span class="method get">GET</span><code>/uploads/{filename}</code> - Получить файл</div>
-                <div><span class="method delete">DELETE</span><code>/api/upload/{filename}</code> - Удалить файл</div>
-            </div>
-            
-            <p><strong>Данные для входа по умолчанию:</strong></p>
-            <ul>
-                <li>Email: admin@vivood.com</li>
-                <li>Пароль: admin123</li>
-            </ul>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivood - Система управления бронированием</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e9ecef;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .features {
+            margin-top: 3rem;
+            text-align: left;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        
+        .feature::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: #e8f5e8;
+            color: #155724;
+            border: 1px solid #c3e6c3;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">V</div>
+        <h1>Vivood</h1>
+        <p>Система управления бронированием и размещением</p>
+        
+        <?php
+        // Check database connection
+        try {
+            require_once 'config/database.php';
+            echo '<div class="status">✅ База данных подключена успешно</div>';
+            $dbConnected = true;
+        } catch (Exception $e) {
+            echo '<div class="status error">❌ Ошибка подключения к базе данных: ' . $e->getMessage() . '</div>';
+            $dbConnected = false;
+        }
+        ?>
+        
+        <div class="features">
+            <div class="feature">Управление бронированиями</div>
+            <div class="feature">База клиентов</div>
+            <div class="feature">Типы размещения</div>
+            <div class="feature">Статистика и отчеты</div>
+            <div class="feature">Управление задачами</div>
+            <div class="feature">Загрузка файлов</div>
         </div>
-    </body>
-    </html>
-    <?php
-}
-?>
+        
+        <div class="buttons">
+            <?php if ($dbConnected): ?>
+                <a href="admin.html" class="btn btn-primary">Панель администратора</a>
+                <a href="api/stats.php" class="btn btn-secondary">API Статистика</a>
+            <?php else: ?>
+                <button class="btn btn-secondary" disabled>Сначала настройте базу данных</button>
+            <?php endif; ?>
+        </div>
+        
+        <p style="margin-top: 2rem; font-size: 0.9rem; color: #888;">
+            Для входа в систему используйте:<br>
+            Email: admin@vivood.com<br>
+            Пароль: admin123
+        </p>
+    </div>
+</body>
+</html>
