@@ -1,15 +1,15 @@
 <?php
 // Database configuration
-$host = 'localhost';
-$dbname = 'vivood_db';
-$username = 'root';
-$password = '';
+// Обновите эти значения согласно настройкам вашего хостинга
+$host = 'localhost';  // или IP адрес базы данных
+$dbname = 'your_database_name';  // имя вашей базы данных
+$username = 'your_database_user';  // пользователь базы данных
+$password = 'your_database_password';  // пароль от базы данных
 
-// For production, update these values:
-// $host = 'your_database_host';
-// $dbname = 'your_database_name';
-// $username = 'your_database_user';
-// $password = 'your_database_password';
+// Пример для популярных хостингов:
+// Beget: $host = 'localhost'; $dbname = 'your_account_dbname';
+// TimeWeb: $host = 'localhost'; $dbname = 'your_account_dbname';
+// Hostinger: $host = 'localhost'; $dbname = 'your_account_dbname';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
