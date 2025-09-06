@@ -255,6 +255,19 @@ const Index = () => {
       const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
       const totalPrice = pricePerNight * nights;
 
+      // Логируем данные перед отправкой
+      console.log('Attempting to create booking with data:', {
+        accommodation_type: formData.accommodationType,
+        check_in: checkIn,
+        check_out: checkOut,
+        guests: formData.guests,
+        name: formData.name,
+        email: `${formData.phone.replace(/\D/g, '')}@booking.vivoodtau.kz`,
+        phone: formData.phone,
+        status: 'pending',
+        total_price: totalPrice
+      });
+
       const { data: booking, error } = await supabase
         .from('bookings')
         .insert([{
@@ -272,15 +285,33 @@ const Index = () => {
         .single();
 
       if (error) {
-        console.error('Error creating booking:', error);
+        console.error('Detailed booking error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // Более информативное сообщение об ошибке
+        let errorMessage = "Не удалось создать бронирование.";
+        if (error.code === '42501') {
+          errorMessage = "Недостаточно прав для создания бронирования.";
+        } else if (error.code === '23502') {
+          errorMessage = "Не все обязательные поля заполнены.";
+        } else if (error.message) {
+          errorMessage = `Ошибка: ${error.message}`;
+        }
+        
         toast({
-          title: "Ошибка",
-          description: "Не удалось создать бронирование. Попробуйте еще раз.",
+          title: "Ошибка бронирования",
+          description: errorMessage,
           variant: "destructive"
         });
         setIsLoading(false); // Важно: сбрасываем состояние загрузки при ошибке
         return;
       }
+
+      console.log('Booking created successfully:', booking);
 
       // Проверяем совпадение с WhatsApp сессией
       try {
