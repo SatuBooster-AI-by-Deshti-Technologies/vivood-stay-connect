@@ -263,7 +263,7 @@ const Index = () => {
           check_out: checkOut,
           guests: formData.guests,
           name: formData.name,
-          email: formData.phone, // Используем телефон вместо email
+          email: `${formData.phone.replace(/\D/g, '')}@booking.vivoodtau.kz`, // Создаем валидный email из телефона
           phone: formData.phone,
           status: 'pending',
           total_price: totalPrice
@@ -278,6 +278,7 @@ const Index = () => {
           description: "Не удалось создать бронирование. Попробуйте еще раз.",
           variant: "destructive"
         });
+        setIsLoading(false); // Важно: сбрасываем состояние загрузки при ошибке
         return;
       }
 
