@@ -601,6 +601,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_booking_rate_limit: {
+        Args: { client_email: string; client_phone: string }
+        Returns: boolean
+      }
       create_activity: {
         Args: {
           activity_description: string
